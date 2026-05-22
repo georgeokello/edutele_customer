@@ -1,0 +1,318 @@
+package com.example.edutelecustomer.ui.screens.homescreen
+
+
+import android.annotation.SuppressLint
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import com.example.edutelecustomer.data.local.UserPreferences
+import com.example.edutelecustomer.data.model.cards.CardInfo
+import com.example.edutelecustomer.data.model.cards.RecentTransaction
+import com.example.edutelecustomer.data.repository.AuthRepository
+import com.example.edutelecustomer.data.remote.RetrofitInstance
+import com.example.edutelecustomer.data.repository.AppTemplateRepository
+import com.example.edutelecustomer.ui.components.AppTemplate
+import com.example.edutelecustomer.ui.components.AppTemplateViewModel
+import com.example.edutelecustomer.ui.components.AppTemplateViewModelFactory
+import com.example.edutelecustomer.ui.components.CardInfoUiState
+import com.example.edutelecustomer.ui.navigation.navItems
+import com.example.edutelecustomer.ui.screens.childcardhistory.TransactionCard
+import com.example.edutelecustomer.ui.util.navigateTo
+
+
+@RequiresApi(Build.VERSION_CODES.O)
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@Composable
+fun HomeScreen(
+    navController: NavController
+) {
+    val context = LocalContext.current
+    val userPreferences = remember { UserPreferences(context) }
+
+    val api = RetrofitInstance.api // however you provide it
+    val repository = remember { AuthRepository(api, userPreferences) }
+
+    val viewModel: HomeViewModel = viewModel(
+        factory = HomeViewModelFactory(userPreferences, repository)
+    )
+
+    val appViewModel: AppTemplateViewModel = viewModel(
+        factory = AppTemplateViewModelFactory(userPreferences)
+    )
+
+    val cardInfo by appViewModel.cardInfoUiState.collectAsState()
+
+    val user by viewModel.username.collectAsState()
+
+
+
+    val currentRoute = "home"
+
+    AppTemplate(
+        userName=user.toString(),
+        balance = " ${cardInfo.card?.balance ?: "0"}",
+        navItems = navItems,
+        selectedNavIndex = navItems.indexOfFirst { it.route == currentRoute },
+        onNavSelected = { index ->
+            val route = navItems[index].route
+            if (route != currentRoute) navigateTo(navController, route)
+        }
+    ) {
+        Box(Modifier.fillMaxSize()) {
+
+            Column() {
+                Spacer(modifier = Modifier.height(50.dp))
+                FinanceStatCard(
+                    belowText = "Total Spending",
+                    number = cardInfo.quickStats?.total_spent?.value ?: "--",
+                    percentage = (cardInfo.quickStats?.total_spent?.change_pct ?: "--").toString()
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+                when {
+                    cardInfo.isLoading -> {
+                        CircularProgressIndicator()
+                    }
+
+                    cardInfo.error != null -> {
+                        Text(
+                            text = cardInfo.error ?: "Unknown error",
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+
+                    else -> {
+                        Text(text = "Recent Transactions")
+                        LazyColumn(
+                        ) {
+                            items(cardInfo.recentTransactions) { transaction ->
+                                RecentHistory(transaction)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun FinanceStatCard(
+    belowText: String,
+    number: String,
+    percentage: String,
+    modifier: Modifier = Modifier,
+    amountColor: Color = Color(0xFF0B2C5F),
+    percentageColor: Color = Color(0xFF00A63E),
+    iconBackground: Color = Color(0xFFF2F4F8),
+    iconTint: Color = Color(0xFFE9A001),
+    containerColor: Color = Color.White,
+    icon: ImageVector = Icons.Filled.DateRange
+) {
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(120.dp),
+
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = containerColor
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 2.dp
+        )
+    ) {
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(18.dp)
+        ) {
+
+            // ICON
+            Box(
+                modifier = Modifier
+                    .size(26.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(iconBackground),
+                contentAlignment = Alignment.Center
+            ) {
+
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconTint,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+
+            // PERCENTAGE
+            Text(
+                text = percentage,
+                color = percentageColor,
+                fontWeight = FontWeight.Bold,
+                fontSize = 17.sp,
+                modifier = Modifier.align(Alignment.TopEnd)
+            )
+
+            // CONTENT
+            Column(
+                modifier = Modifier.align(Alignment.BottomStart)
+            ) {
+                Text(
+                    text = number,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = amountColor
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text =  belowText,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF6B7280)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun RecentHistory(recentTransaction: RecentTransaction) {
+
+    val statusColor = when (recentTransaction.status.lowercase()) {
+        "success", "completed", "paid" -> Color(0xFF16A34A)
+        "pending" -> Color(0xFFF59E0B)
+        "failed", "declined" -> Color(0xFF990000)
+        else -> Color(0xFF6B7280)
+    }
+
+    val amountColor = if (recentTransaction.amount.trim().startsWith("-")) {
+        Color(0xFF990000) // red
+    } else {
+        Color(0xFF16A34A) // green (or your default)
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFE3E4E6)),
+    ) {
+
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
+        ) {
+
+            // TOP ROW
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                Text(
+                    text = recentTransaction.activity,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF111827)
+                )
+
+                Text(
+                    text = recentTransaction.amount,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = amountColor
+                )
+            }
+
+            // "HR" DIVIDER
+            Spacer(modifier = Modifier.height(8.dp))
+
+            HorizontalDivider(
+                thickness = 1.dp,
+                color = Color(0xFFCFCFCF)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // BOTTOM ROW
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                Column {
+
+                    Text(
+                        text = recentTransaction.place,
+                        fontSize = 13.sp,
+                        color = Color(0xFF6B7280)
+                    )
+
+                    Text(
+                        text = recentTransaction.date,
+                        fontSize = 12.sp,
+                        color = Color(0xFF9CA3AF)
+                    )
+                }
+
+                Text(
+                    text = recentTransaction.status.uppercase(),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = statusColor
+                )
+            }
+        }
+    }
+}
