@@ -83,9 +83,19 @@ fun HistoryScreen(navController: NavController) {
                         }
 
                         state.error != null -> {
+                            LaunchedEffect(state.error) {
+
+                                if (cardInfo.error == "Invalid or expired token.") {
+
+                                    navController.navigate("login") {
+                                        popUpTo(0)
+                                        launchSingleTop = true
+                                    }
+                                }
+                            }
                             Text(
-                                text = state.error ?: "Unknown error",
-                                color = MaterialTheme.colorScheme.error
+                                text = "Something went wrong, Check your internet",
+                                color = Color.Gray
                             )
                         }
 
@@ -138,7 +148,7 @@ fun TransactionCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(2.dp),
+        elevation = CardDefaults.cardElevation(1.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
 
@@ -157,7 +167,7 @@ fun TransactionCard(
 
                     Text(
                         text = transaction.type.uppercase(),
-                        fontSize = 18.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
                     )
@@ -166,7 +176,7 @@ fun TransactionCard(
 
                     Text(
                         text = viewModel.formatTimestamp(transaction.timestamp),
-                        fontSize = 13.sp,
+                        fontSize = 12.sp,
                         color = Color.Gray
                     )
                 }
@@ -183,7 +193,7 @@ fun TransactionCard(
                             vertical = 6.dp
                         ),
                         color = statusColor,
-                        fontSize = 12.sp,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -194,7 +204,7 @@ fun TransactionCard(
             // AMOUNT
             Text(
                 text = "UGX ${transaction.amount}",
-                fontSize = 24.sp,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
             )
@@ -213,13 +223,13 @@ fun TransactionCard(
 
                 Text(
                     text = "New Balance",
-                    fontSize = 13.sp,
+                    fontSize = 12.sp,
                     color = Color.Gray
                 )
 
                 Text(
                     text = "UGX ${transaction.balance_after}",
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color.Black
                 )

@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.edutelecustomer.data.local.UserPreferences
 import com.example.edutelecustomer.data.model.cards.LinkCardInvitationItems
-import com.example.edutelecustomer.data.model.cards.LinkedCardItem
+import com.example.edutelecustomer.data.model.cards.RelationshipItem
 import com.example.edutelecustomer.data.model.transactions.TransactionItem
 import com.example.edutelecustomer.data.repository.CardsRepository
 import com.example.edutelecustomer.ui.screens.historyscreen.TransactionUiState
@@ -17,11 +17,13 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.json.JSONObject
+import retrofit2.Response
 
 // 📊 UI State
 data class CardsUiState(
     val isLoading: Boolean = false,
-    val cards: List<LinkedCardItem> = emptyList(),
+    val cards: List<RelationshipItem> = emptyList(),
     val message: String = "",
     val error: String? = null
 )
@@ -97,7 +99,13 @@ class CardsViewModel(
     var setSuccessDialog = MutableStateFlow(false)
         private set
 
+    var setFailureDialog = MutableStateFlow(false)
+        private set
+
     var showChildCardBalance = MutableStateFlow(false)
+        private set
+
+    var selectedCard = MutableStateFlow<RelationshipItem?>(null)
         private set
 
 
@@ -110,11 +118,13 @@ class CardsViewModel(
 
     val uiChildCardState = _uiChildBalanceState.asStateFlow()
 
-    fun openLinkCardDialog() {
+    fun openLinkCardDialog(card: RelationshipItem) {
+        selectedCard.value = card
         _uiLinkState.update { it.copy(showDialog = true) }
     }
 
     fun closeLinkCardDialog() {
+        selectedCard.value = null
         _uiLinkState.update { it.copy(showDialog = false) }
     }
 
@@ -187,19 +197,36 @@ class CardsViewModel(
                         )
                         if(cards.isEmpty()){
                             _uiState.value = _uiState.value.copy(
-                                message = "You Have No Cards Under this Account"
+                                message = "You Have No Cards Under this Account",
+                                isLoading = false
+
                             )
                         }
 
                     } else {
+                        val errorBody = response.errorBody()?.string()
 
-                        val errorBody =
-                            response.errorBody()?.string()
+                        val errorDetail = errorBody?.let {
+                            try {
+                                JSONObject(it).getString("detail")
+                            } catch (e: Exception) {
+                                "Unknown error"
+                            }
+                        }
+
+                        _uiState.value = _uiState.value.copy(
+                            error = errorDetail,
+                            isLoading = false
+
+                        )
+
                     }
 
                 }else{
                     _uiState.value = _uiState.value.copy(
-                        error = "No token found"
+                        error = "No token found",
+                        isLoading = false
+
                     )
                 }
 
@@ -234,9 +261,26 @@ class CardsViewModel(
                         )
                         if(invitation.isEmpty()){
                             _invitationUiState.value = _invitationUiState.value.copy(
-                                message = "No Invitation Available"
+                                message = "No Invitation Available",
+                                isLoading = false
                             )
                         }
+                    } else {
+                        val errorBody = response.errorBody()?.string()
+
+                        val errorDetail = errorBody?.let {
+                            try {
+                                JSONObject(it).getString("detail")
+                            } catch (e: Exception) {
+                                "Unknown error"
+                            }
+                        }
+
+                        _invitationUiState.value = _invitationUiState.value.copy(
+                            error = errorDetail,
+                            isLoading = false
+
+                        )
                     }
                 }else{
                     _invitationUiState.value = _invitationUiState.value.copy(
@@ -261,16 +305,39 @@ class CardsViewModel(
                     val response = repository.AcceptInvitation(
                         tokenValue, relationshipId
                     )
-                    setSuccessDialog.value = true
-                    _invitationUiState.value = _invitationUiState.value.copy(
-                        invitations = emptyList(),
-                        total = 0
-                    )
+                    if(response.isSuccessful){
+                        setSuccessDialog.value = true
+                        _invitationUiState.value = _invitationUiState.value.copy(
+                            invitations = emptyList(),
+                            total = 0
+                        )
+                        fetchInvitation()
+                        fetchCards()
+                    }else{
+                        val errorBody = response.errorBody()?.string()
+
+                        val errorDetail = errorBody?.let {
+                            try {
+                                JSONObject(it).getString("detail")
+                            } catch (e: Exception) {
+                                "Unknown error"
+                            }
+                        }
+
+                        _invitationUiState.value = _invitationUiState.value.copy(
+                            error = errorDetail,
+                            isLoading = false
+
+                        )
+                        setFailureDialog.value = true
+                    }
+
                 }
             }catch (e: Exception){
-                _uiState.value = _uiState.value.copy(
+                _invitationUiState.value = _invitationUiState.value.copy(
                     error = "Failed to accept card"
                 )
+                setFailureDialog.value = true
             }
         }
     }
@@ -283,22 +350,44 @@ class CardsViewModel(
                     val response = repository.DeclineInvitation(
                         tokenValue, relationshipId
                     )
+                    if(response.isSuccessful){
+                        setSuccessDialog.value = true
+                        _invitationUiState.value = _invitationUiState.value.copy(
+                            invitations = emptyList(),
+                            total = 0
 
-                    setSuccessDialog.value = true
-                    _invitationUiState.value = _invitationUiState.value.copy(
-                        invitations = emptyList(),
-                        total = 0
+                        )
+                        fetchInvitation()
+                        fetchCards()
+                    }else{
+                        val errorBody = response.errorBody()?.string()
 
-                    )
+                        val errorDetail = errorBody?.let {
+                            try {
+                                JSONObject(it).getString("detail")
+                            } catch (e: Exception) {
+                                "Unknown error"
+                            }
+                        }
+
+                        _invitationUiState.value = _invitationUiState.value.copy(
+                            error = errorDetail,
+                            isLoading = false
+
+                        )
+                        setFailureDialog.value = true
+                    }
 
                 }
             }catch (e: Exception){
 
                 Log.e("DECLINE_ERROR", "Error", e)
 
-                _uiState.value = _uiState.value.copy(
+                _invitationUiState.value = _invitationUiState.value.copy(
                     error = e.message ?: "Unknown error"
                 )
+
+                setFailureDialog.value = true
             }
         }
     }
@@ -322,12 +411,30 @@ class CardsViewModel(
                         showSendConfirmDialog.value = false
                         setSuccessDialog.value = true
 
+                    } else {
+                        val errorBody = response.errorBody()?.string()
+
+                        val errorDetail = errorBody?.let {
+                            try {
+                                JSONObject(it).getString("detail")
+                            } catch (e: Exception) {
+                                "Unknown error"
+                            }
+                        }
+
+                        _uiState.value = _uiState.value.copy(
+                            error = errorDetail,
+                            isLoading = false
+
+                        )
+                        setFailureDialog.value = true
                     }
                 }else{
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         error = "No token found"
                     )
+                    setFailureDialog.value = true
 
                 }
 
@@ -336,6 +443,7 @@ class CardsViewModel(
                     isLoading = false,
                     error = "Failed to Send Money"
                 )
+                setFailureDialog.value = true
             }
         }
 
@@ -351,8 +459,28 @@ class CardsViewModel(
                 val tokenValue = userPreferences.tokenFlow.first()
                 if(!tokenValue.isNullOrEmpty()){
                     val response = repository.deteleChildCard(tokenValue, card_public_id)
-                    if(response.isEmpty()){
+                    if(response.isSuccessful){
+                        closeDeleteCardDialog()
                         setSuccessDialog.value = true
+                        fetchInvitation()
+                        fetchCards()
+                    }else{
+                        val errorBody = response.errorBody()?.string()
+
+                        val errorDetail = errorBody?.let {
+                            try {
+                                JSONObject(it).getString("detail")
+                            } catch (e: Exception) {
+                                "Unknown error"
+                            }
+                        }
+
+                        _uiState.value = _uiState.value.copy(
+                            error = errorDetail,
+                            isLoading = false
+
+                        )
+                        setFailureDialog.value = true
                     }
 
                 }
@@ -361,6 +489,7 @@ class CardsViewModel(
                     isLoading = false,
                     error = "Failed to delete card"
                 )
+                setFailureDialog.value = true
             }
         }
 
@@ -382,6 +511,26 @@ class CardsViewModel(
                             isLoading = false,
                         )
                         setSuccessDialog.value = true
+                        fetchInvitation()
+                        fetchCards()
+                    }else {
+                        val errorBody = response.errorBody()?.string()
+
+                        val errorDetail = errorBody?.let {
+                            try {
+                                JSONObject(it).getString("detail")
+                            } catch (e: Exception) {
+                                "Unknown error"
+                            }
+                        }
+
+                        _uiState.value = _uiState.value.copy(
+                            error = errorDetail,
+                            isLoading = false
+
+                        )
+
+                        setFailureDialog.value = true
                     }
                 }
             }catch (e:Exception){
@@ -389,6 +538,7 @@ class CardsViewModel(
                     isLoading = false,
                     error = "Failed to Set Limit"
                 )
+                setFailureDialog.value = true
             }
         }
     }
@@ -404,6 +554,27 @@ class CardsViewModel(
                     val response = repository.linkCard(tokenValue, phoneNumber, relationship, allowTopUp, viewBalance, viewHistory, freezeCard )
                     if(response.isSuccessful){
                         setSuccessDialog.value = true
+                        closeLinkCardDialog()
+                        fetchInvitation()
+                        fetchCards()
+                    }else{
+                        val errorBody = response.errorBody()?.string()
+
+                        val errorDetail = errorBody?.let {
+                            try {
+                                JSONObject(it).getString("detail")
+                            } catch (e: Exception) {
+                                "Unknown error"
+                            }
+                        }
+
+                        _uiState.value = _uiState.value.copy(
+                            error = errorDetail,
+                            isLoading = false
+
+                        )
+
+                        setFailureDialog.value = true
                     }
                 }
             }catch (e:Exception){
@@ -411,6 +582,7 @@ class CardsViewModel(
                     isLoading = false,
                     error = "Failed to Send Link Card request"
                 )
+                setFailureDialog.value = true
             }
         }
     }
@@ -421,15 +593,36 @@ class CardsViewModel(
                 val tokenValue = userPreferences.tokenFlow.first()
                 if(!tokenValue.isNullOrEmpty()){
                     val response = repository.freezeCard(tokenValue, child_public_id)
-                    if(response.isNotEmpty()){
+                    if(response.isSuccessful){
                         setSuccessDialog.value = true
+                        fetchInvitation()
+                        fetchCards()
+                    }else{
+                        val errorBody = response.errorBody()?.string()
+
+                        val errorDetail = errorBody?.let {
+                            try {
+                                JSONObject(it).getString("detail")
+                            } catch (e: Exception) {
+                                "Unknown error"
+                            }
+                        }
+
+                        _uiState.value = _uiState.value.copy(
+                            error = errorDetail,
+                            isLoading = false
+
+                        )
+                        setFailureDialog.value = true
                     }
+
                 }
             }catch (e:Exception){
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     error = "Failed to Freeze Card"
                 )
+                setFailureDialog.value = true
             }
         }
     }
@@ -440,15 +633,37 @@ class CardsViewModel(
                 val tokenValue = userPreferences.tokenFlow.first()
                 if(!tokenValue.isNullOrEmpty()){
                     val response = repository.unfreezeCard(tokenValue, child_public_id)
-                    if(response.isNotEmpty()){
+                    if(response.isSuccessful){
                         setSuccessDialog.value = true
+                        fetchInvitation()
+                        fetchCards()
+                    }else{
+                        val errorBody = response.errorBody()?.string()
+
+                        val errorDetail = errorBody?.let {
+                            try {
+                                JSONObject(it).getString("detail")
+                            } catch (e: Exception) {
+                                "Unknown error"
+                            }
+                        }
+
+                        _uiState.value = _uiState.value.copy(
+                            error = errorDetail,
+                            isLoading = false
+
+                        )
+
+                        setFailureDialog.value = true
                     }
+
                 }
             }catch (e:Exception){
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     error = "Failed to Freeze Card"
                 )
+                setFailureDialog.value = true
             }
         }
     }
@@ -462,8 +677,27 @@ class CardsViewModel(
                     val response = repository.getChildCardBalance(tokenValue, child_public_id)
                     if(response.isSuccessful){
                         _uiChildBalanceState.value = _uiChildBalanceState.value.copy(
+                            child_public_id = child_public_id,
                             balance =  response.body()!!.balance
                         )
+                    }else{
+                        val errorBody = response.errorBody()?.string()
+
+                        val errorDetail = errorBody?.let {
+                            try {
+                                JSONObject(it).getString("detail")
+                            } catch (e: Exception) {
+                                "Unknown error"
+                            }
+                        }
+
+                        _uiState.value = _uiState.value.copy(
+                            error = errorDetail,
+                            isLoading = false
+
+                        )
+
+                        setFailureDialog.value = true
                     }
                 }
             }catch (e:Exception){
@@ -471,41 +705,50 @@ class CardsViewModel(
                     isLoading = false,
                     error = "Failed to get Card Balance"
                 )
+
+                setFailureDialog.value = true
             }
         }
     }
 
 
-
-    fun openSendDialog(){
+    fun openSendDialog(card: RelationshipItem){
+        selectedCard.value = card
         showSendDialog.value = true
     }
 
     fun closeSendDialog(){
+        selectedCard.value = null
         showSendDialog.value = false
     }
 
-    fun openSendConfirmDialog(){
+    fun openSendConfirmDialog(card: RelationshipItem){
+        selectedCard.value = card
         showSendConfirmDialog.value = true
     }
 
     fun closeSendConfirmDialog(){
+        selectedCard.value = null
         showSendConfirmDialog.value = false
     }
 
-    fun openDeleteCardDialog(){
+    fun openDeleteCardDialog(card: RelationshipItem){
+        selectedCard.value = card
         showDeleteCardDialog.value = true
     }
 
     fun closeDeleteCardDialog(){
+        selectedCard.value  = null
         showDeleteCardDialog.value = false
     }
 
-    fun openSetLimitDialog(){
+    fun openSetLimitDialog(card: RelationshipItem){
+        selectedCard.value = card
         showSetLimitDialog.value = true
     }
 
     fun closeSetLimitDialog(){
+        selectedCard.value = null
         showSetLimitDialog.value = false
     }
 
@@ -517,12 +760,23 @@ class CardsViewModel(
         setSuccessDialog.value = false
     }
 
-    fun showChildCardBalance(){
+    fun closeFailureDialog(){
+        setFailureDialog.value = false
+    }
+
+    fun showChildCardBalance(card: RelationshipItem){
+        selectedCard.value = card
         showChildCardBalance.value = true
     }
 
     fun hideChildCardBalance(){
+        selectedCard.value = null
         showChildCardBalance.value = false
+        _uiChildBalanceState.value = _uiChildBalanceState.value.copy(
+            child_public_id = "",
+            balance =  ""
+        )
+
     }
 
 }

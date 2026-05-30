@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 
 data class UiState(
     val isLoading: Boolean = false,
@@ -80,10 +81,19 @@ class QrCodeViewModel(
 
                 } else {
 
+                    val errorBody = response.errorBody()?.string()
+
+                    val errorDetail = errorBody?.let {
+                        try {
+                            JSONObject(it).getString("detail")
+                        } catch (e: Exception) {
+                            "Unknown error"
+                        }
+                    }
+
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = response.errorBody()?.string()
-                            ?: "Failed to generate token"
+                        error = errorDetail
                     )
                 }
 

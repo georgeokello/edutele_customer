@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -69,12 +70,19 @@ class ChildCardHistoryViewModel(
 
                     } else {
 
-                        val errorBody =
-                            response.errorBody()?.string()
+                        val errorBody = response.errorBody()?.string()
+
+                        val errorDetail = errorBody?.let {
+                            try {
+                                JSONObject(it).getString("detail")
+                            } catch (e: Exception) {
+                                "Unknown error"
+                            }
+                        }
 
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            error = errorBody ?: "Failed to load transactions"
+                            error = errorDetail
                         )
                     }
 

@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -15,6 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -62,7 +65,9 @@ fun QrCodeScreen(
 
     AppTemplate(
         userName=user.toString(),
-        balance = " ${cardInfo.card?.balance ?: 0}",
+        balanceTitle = "",
+        balance = "Scan the QR Code",
+        balanceBelowText = "",
         navItems = navItems,
         selectedNavIndex = navItems.indexOfFirst { it.route == currentRoute },
         onNavSelected = { index ->
@@ -72,14 +77,39 @@ fun QrCodeScreen(
     ) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
 
-            state.payToken?.let { token ->
+            when {
+                state.isLoading -> {
+                    CircularProgressIndicator()
+                }
 
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
+                state.error != null -> {
+                    LaunchedEffect(state.error) {
 
-                    QrCode(token)
+                        if (cardInfo.error == "Invalid or expired token.") {
 
+                            navController.navigate("login") {
+                                popUpTo(0)
+                                launchSingleTop = true
+                            }
+                        }
+                    }
+                    Text(
+                        text = "Something went wrong, Check your internet",
+                        color = Color.Gray
+                    )
+                }
+
+                else -> {
+                    state.payToken?.let { token ->
+
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+
+                            QrCode(token)
+
+                        }
+                    }
                 }
             }
         }

@@ -1,22 +1,30 @@
 package com.example.edutelecustomer.data.model.cards
 
+
 data class CardsResponse(
-    val items: List<LinkedCardItem>,
+    val items: List<RelationshipItem>,
     val total: Int
 )
 
-data class LinkedCardItem(
-    val child_public_id: String,
+data class RelationshipItem(
+    val public_id: String,
     val full_name: String,
     val phone: String,
     val account_type: String,
+    val has_card: Boolean,
+    val card_frozen: Boolean,
+    val i_manage_them: RelationshipDetails,
+    val they_manage_me: RelationshipDetails
+)
+
+data class RelationshipDetails(
+    val status: String,
+    val relationship_id: Int,
     val relationship_type: String,
-    val link_status: String,
     val can_topup: Boolean,
     val can_view_balance: Boolean,
     val can_view_history: Boolean,
     val can_freeze: Boolean,
-    val card_frozen_by_parent: Boolean,
     val weekly_spend_limit: String,
     val linked_at: String
 )

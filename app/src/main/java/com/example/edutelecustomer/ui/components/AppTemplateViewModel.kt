@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 
 
 data class CardInfoUiState(
@@ -69,21 +70,35 @@ class AppTemplateViewModel(
                         )
                     } else {
                         // handle error/ request unsuccessful
+
+                        val errorBody = response.errorBody()?.string()
+
+                        val errorDetail = errorBody?.let {
+                            try {
+                                JSONObject(it).getString("detail")
+                            } catch (e: Exception) {
+                                "Unknown error"
+                            }
+                        }
+
                         _cardInfoUiState.value = _cardInfoUiState.value.copy(
-                            error = "failed to get card Info"
+                            error = errorDetail ?: "Unknown Server error",
+                            isLoading = false
                         )
                     }
 
                 }else{
                     _cardInfoUiState.value = _cardInfoUiState.value.copy(
-                        error = "No token found"
+                        error = "No token found",
+                        isLoading = false
                     )
                 }
 
             } catch (e: Exception) {
 
                 _cardInfoUiState.value = _cardInfoUiState.value.copy(
-                    error = e.message
+                    error = e.message,
+                    isLoading = false
                 )
             }
         }

@@ -6,10 +6,10 @@ data class ChildCardHistoryResponse (
 )
 
 data class ChildHistoryItems(
-    val public_id: String,
-    val tx_type: String,
-    val amount: String,
-    val status: String,
-    val description: String,
-    val created_at: String
+    val public_id: String? = null,
+    val tx_type: String? = null,
+    val amount: String? = null,
+    val status: String? = null,
+    val description: String? = null,
+    val created_at: String? = null,
 )

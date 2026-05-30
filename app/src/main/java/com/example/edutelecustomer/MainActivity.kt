@@ -30,6 +30,7 @@ import com.example.edutelecustomer.ui.screens.historyscreen.HistoryScreen
 import com.example.edutelecustomer.ui.screens.homescreen.HomeScreen
 import com.example.edutelecustomer.ui.screens.loginscreen.LoginScreen
 import com.example.edutelecustomer.ui.screens.qrcode.QrCodeScreen
+import com.example.edutelecustomer.ui.screens.sendmoneyscreen.SendMoneyScreen
 import com.example.edutelecustomer.ui.theme.EduteleCustomerTheme
 
 
@@ -96,8 +97,8 @@ fun AppNavigation(modifier: Modifier){
         composable("cards") {
             CardsScreen(navController)
         }
-        composable("cards"){
-            CardsScreen(navController)
+        composable("send") {
+            SendMoneyScreen(navController)
         }
         composable("childCardHistory/{childId}"){ backStackEntry ->
             val childId = backStackEntry.arguments?.getString("childId") ?: ""

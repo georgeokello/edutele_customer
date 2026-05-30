@@ -26,6 +26,9 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.rounded.DateRange
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -43,13 +46,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.edutelecustomer.R
 import com.example.edutelecustomer.data.local.UserPreferences
 import com.example.edutelecustomer.data.model.cards.CardInfo
 import com.example.edutelecustomer.data.model.cards.RecentTransaction
@@ -113,21 +119,72 @@ fun HomeScreen(
                     percentage = (cardInfo.quickStats?.total_spent?.change_pct ?: "--").toString()
                 )
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    Text(
+                        text = "Recent Transactions",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Button(
+                        onClick = {
+                            navigateTo(navController, "send")
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF2E7D32),
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.send_money_24px),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+
+                        Spacer(modifier = Modifier.width(6.dp))
+
+                        Text(
+                            text = "Send Money",
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                }
+
                 when {
                     cardInfo.isLoading -> {
                         CircularProgressIndicator()
                     }
 
                     cardInfo.error != null -> {
+                        LaunchedEffect(cardInfo.error) {
+
+                            if (cardInfo.error == "Invalid or expired token.") {
+
+                                navController.navigate("login") {
+                                    popUpTo(0)
+                                    launchSingleTop = true
+                                }
+                            }
+                        }
                         Text(
-                            text = cardInfo.error ?: "Unknown error",
-                            color = MaterialTheme.colorScheme.error
+                            text = "Something went wrong, Check your internet",
+                            color = Color.Gray
                         )
                     }
 
                     else -> {
-                        Text(text = "Recent Transactions")
+
                         LazyColumn(
                         ) {
                             items(cardInfo.recentTransactions) { transaction ->
@@ -152,7 +209,7 @@ fun FinanceStatCard(
     iconBackground: Color = Color(0xFFF2F4F8),
     iconTint: Color = Color(0xFFE9A001),
     containerColor: Color = Color.White,
-    icon: ImageVector = Icons.Filled.DateRange
+    icon: Painter = painterResource(id = R.drawable.account_balance_wallet_24px)
 ) {
 
     Card(
@@ -185,7 +242,7 @@ fun FinanceStatCard(
             ) {
 
                 Icon(
-                    imageVector = icon,
+                    painter = icon,
                     contentDescription = null,
                     tint = iconTint,
                     modifier = Modifier.size(22.dp)

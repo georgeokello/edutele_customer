@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
@@ -49,6 +50,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -61,14 +63,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.edutelecustomer.data.local.UserPreferences
 import com.example.edutelecustomer.data.model.cards.LinkCardInvitationItems
-import com.example.edutelecustomer.data.model.cards.LinkedCardItem
+import com.example.edutelecustomer.data.model.cards.RelationshipItem
 import com.example.edutelecustomer.data.model.transactions.TransactionItem
 import com.example.edutelecustomer.ui.components.AppTemplate
 import com.example.edutelecustomer.ui.components.AppTemplateViewModel
@@ -102,6 +107,7 @@ fun CardsScreen(
     val showDeleteCardDialog by viewModel.showDeleteCardDialog.collectAsState()
     
     val SuccessDialog by viewModel.setSuccessDialog.collectAsState()
+    val FailureDialog by viewModel.setFailureDialog.collectAsState()
 
     val stateLinkCard by viewModel.uiLinkState.collectAsState()
 
@@ -115,6 +121,8 @@ fun CardsScreen(
 
     val cardInfo by appViewModel.cardInfoUiState.collectAsState()
 
+    val selectedCard by viewModel.selectedCard.collectAsState()
+
     val user by viewModel.username.collectAsState()
     val currentRoute = "cards"
 
@@ -126,6 +134,7 @@ fun CardsScreen(
     var limitAmount by remember {
         mutableStateOf("")
     }
+
 
     LaunchedEffect(Unit) {
         viewModel.init()
@@ -157,9 +166,12 @@ fun CardsScreen(
                         CircularProgressIndicator()
                     }
                     else -> {
-                        Text(text = "Pending Request (${invitationState.total})")
+                        if(invitationState.total != 0){
+                            Text(text = "Pending Request (${invitationState.total})")
+                        }
+
                         LazyColumn(
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             items(invitationState.invitations){ invitation ->
                                 InvitationCard(invitation, viewModel)
@@ -174,9 +186,19 @@ fun CardsScreen(
                     }
 
                     state.error != null -> {
+                        LaunchedEffect(cardInfo.error) {
+
+                            if (cardInfo.error == "Invalid or expired token.") {
+
+                                navController.navigate("login") {
+                                    popUpTo(0)
+                                    launchSingleTop = true
+                                }
+                            }
+                        }
                         Text(
-                            text = state.error ?: "Unknown error",
-                            color = MaterialTheme.colorScheme.error
+                            text = "Something went wrong, Try Again Later",
+                            color = Color.Gray
                         )
                     }
                     state.message.isNotEmpty() -> {
@@ -187,225 +209,244 @@ fun CardsScreen(
 
                     else -> {
                         LazyColumn(
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             items(state.cards) { card ->
-                                ChildCard(card, viewModel, navController, showChildCardBalance, accessChildBalance)
 
-                                if(showSendDialog){
-                                    AlertDialog(
+                                when (card.i_manage_them.status) {
 
-                                        onDismissRequest = {
-                                            viewModel.closeSendDialog()
-                                        },
+                                    "pending" -> {
+                                        PendingChildCard(card)
+                                    }
 
-                                        title = {
-                                            Text("Sending Money TO:")
-                                        },
+                                    "active" -> {
+                                        ChildCard(
+                                            card,
+                                            viewModel,
+                                            navController,
+                                            showChildCardBalance,
+                                            accessChildBalance
+                                        )
+                                    }
 
-                                        text = {
-
-                                            Column(
-                                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                                            ) {
-
-                                                Text(text = card.full_name)
-
-                                                OutlinedTextField(
-                                                    value = amount,
-                                                    onValueChange = {
-                                                        amount = it
-                                                    },
-                                                    label = {
-                                                        Text("Amount")
-                                                    }
-                                                )
-
-                                                OutlinedTextField(
-                                                    value = remarks,
-                                                    onValueChange = {
-                                                        remarks = it
-                                                    },
-                                                    label = {
-                                                        Text("Remarks")
-                                                    }
-                                                )
-                                            }
-                                        },
-
-                                        confirmButton = {
-
-                                            Button(
-                                                onClick = {
-
-                                                    // Handle confirmation
-                                                    viewModel.openSendConfirmDialog()
-
-                                                    viewModel.closeSendDialog()
-                                                }
-                                            ) {
-
-                                                Text("Send")
-                                            }
-                                        },
-
-                                        dismissButton = {
-
-                                            OutlinedButton(
-                                                onClick = {
-                                                    viewModel.closeSendDialog()
-                                                }
-                                            ) {
-
-                                                Text("Cancel")
-                                            }
-                                        }
-                                    )
+                                    else -> {
+                                        ShowFamilyCards(card, viewModel)
+                                    }
                                 }
-
-                                if(showSendConfirmDialog){
-                                    AlertDialog(
-                                        onDismissRequest = { /*TODO*/ },
-                                        title = {
-                                            Text(text = "Comfirm Transfer")
-                                        },
-                                        text = {
-
-                                            Column(
-                                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                                            ) {
-
-                                                Text(text = card.full_name)
-
-                                                OutlinedTextField(
-                                                    value = pin,
-                                                    onValueChange = {
-                                                        pin = it
-                                                    },
-                                                    label = {
-                                                        Text("Enter Pin")
-                                                    }
-                                                )
-                                            }
-                                        },
-                                        confirmButton = {
-
-                                            Button(
-                                                onClick = {
-                                                    // Handle confirmation
-                                                    viewModel.SendMoney(card.child_public_id, amount, pin, remarks)
-                                                }
-                                            ) {
-
-                                                Text("Confirm")
-                                            }
-                                        },
-                                        dismissButton = {
-
-                                            OutlinedButton(
-                                                onClick = {
-                                                    viewModel.closeSendConfirmDialog()
-                                                }
-                                            ) {
-
-                                                Text("Cancel")
-                                            }
-                                        }
-                                    )
-                                }
-
-                                if(showDeleteCardDialog){
-                                    AlertDialog(
-                                        onDismissRequest = { /*TODO*/ },
-                                        title = {
-                                            Text(text = "Delete Card: ${card.full_name}")
-                                        },
-                                        text = {
-                                            Text(text = "This action cannot be undone!")
-                                        },
-                                        confirmButton = {
-
-                                            Button(
-                                                onClick = {
-                                                    viewModel.deleteCard(card.child_public_id)
-                                                },
-                                                colors = ButtonDefaults.buttonColors(
-                                                    containerColor = Color(0xFFD32F2F),
-                                                    contentColor = Color.White
-                                                )
-                                            ) {
-
-                                                Text("Delete Card")
-                                            }
-                                        },
-                                        dismissButton = {
-
-                                            OutlinedButton(
-                                                onClick = {
-                                                    viewModel.closeDeleteCardDialog()
-                                                }
-                                            ) {
-
-                                                Text("Cancel")
-                                            }
-                                        }
-                                    )
-                                }
-
-                                if(showSetLimitDialog){
-                                    AlertDialog(
-                                        onDismissRequest = { /*TODO*/ },
-                                        title = {
-                                            Text(text = "Weekly Spending Limit")
-                                        },
-                                        text = {
-
-                                            Column(
-                                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                                            ) {
-
-                                                Text(text = card.full_name)
-
-                                                OutlinedTextField(
-                                                    value = limitAmount,
-                                                    onValueChange = {
-                                                        limitAmount = it
-                                                    },
-                                                    label = {
-                                                        Text("Max spend per week (UGX)")
-                                                    }
-                                                )
-
-                                                Text(text = "Leave empty to remove the limit.")
-                                            }
-                                        },
-                                        confirmButton = {
-
-                                            Button(
-                                                onClick = {
-                                                    // Handle confirmation
-                                                    viewModel.setCardLimit(card.child_public_id, limitAmount)
-                                                }
-                                            ) {
-
-                                                Text("Save")
-                                            }
-                                        },
-                                        dismissButton = {
-
-                                            OutlinedButton(
-                                                onClick = {
-                                                    viewModel.closeSetLimitDialog()
-                                                }
-                                            ) {
-
-                                                Text("Cancel")
-                                            }
-                                        }
-                                    )
-                                }
-
                             }
+                        }
+
+                        if(showSendDialog && selectedCard != null){
+                            AlertDialog(
+
+                                onDismissRequest = {
+                                    viewModel.closeSendDialog()
+                                },
+
+                                title = {
+                                    Text("Sending Money To:")
+                                },
+
+                                text = {
+
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+
+                                        Text(text = selectedCard!!.full_name)
+
+                                        OutlinedTextField(
+                                            value = amount,
+                                            onValueChange = {
+                                                amount = it
+                                            },
+                                            label = {
+                                                Text("Amount")
+                                            }
+                                        )
+
+                                        OutlinedTextField(
+                                            value = remarks,
+                                            onValueChange = {
+                                                remarks = it
+                                            },
+                                            label = {
+                                                Text("Remarks")
+                                            }
+                                        )
+                                    }
+                                },
+
+                                confirmButton = {
+
+                                    Button(
+                                        onClick = {
+                                            viewModel.closeSendDialog()
+                                            // Handle confirmation
+                                            viewModel.openSendConfirmDialog(selectedCard!!)
+
+
+                                        }
+                                    ) {
+
+                                        Text("Send")
+                                    }
+                                },
+
+                                dismissButton = {
+
+                                    OutlinedButton(
+                                        onClick = {
+                                            viewModel.closeSendDialog()
+                                        }
+                                    ) {
+
+                                        Text("Cancel")
+                                    }
+                                }
+                            )
+                        }
+
+                        if(showSendConfirmDialog && selectedCard != null){
+                            AlertDialog(
+                                onDismissRequest = { /*TODO*/ },
+                                title = {
+                                    Text(text = "Comfirm Transfer")
+                                },
+                                text = {
+
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+
+                                        Text(text = selectedCard!!.full_name)
+
+                                        OutlinedTextField(
+                                            value = pin,
+                                            onValueChange = {
+                                                pin = it
+                                            },
+                                            label = {
+                                                Text("Enter Pin")
+                                            }
+                                        )
+                                    }
+                                },
+                                confirmButton = {
+
+                                    Button(
+                                        onClick = {
+                                            // Handle confirmation
+                                            viewModel.SendMoney(selectedCard!!.public_id, amount, pin, remarks)
+                                        }
+                                    ) {
+
+                                        Text("Confirm")
+                                    }
+                                },
+                                dismissButton = {
+
+                                    OutlinedButton(
+                                        onClick = {
+                                            viewModel.closeSendConfirmDialog()
+                                        }
+                                    ) {
+
+                                        Text("Cancel")
+                                    }
+                                }
+                            )
+                        }
+
+                        if(showDeleteCardDialog && selectedCard != null){
+                            AlertDialog(
+                                onDismissRequest = { /*TODO*/ },
+                                title = {
+                                    Text(text = "Delete Card: ${selectedCard!!.full_name}")
+                                },
+                                text = {
+                                    Text(text = "This action cannot be undone!")
+                                },
+                                confirmButton = {
+
+                                    Button(
+                                        onClick = {
+                                            viewModel.deleteCard(selectedCard!!.public_id)
+                                        },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0xFFD32F2F),
+                                            contentColor = Color.White
+                                        )
+                                    ) {
+
+                                        Text("Delete Card")
+                                    }
+                                },
+                                dismissButton = {
+
+                                    OutlinedButton(
+                                        onClick = {
+                                            viewModel.closeDeleteCardDialog()
+                                        }
+                                    ) {
+
+                                        Text("Cancel")
+                                    }
+                                }
+                            )
+                        }
+
+                        if(showSetLimitDialog && selectedCard != null){
+                            AlertDialog(
+                                onDismissRequest = { /*TODO*/ },
+                                title = {
+                                    Text(text = "Weekly Spending Limit")
+                                },
+                                text = {
+
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+
+                                        Text(text = selectedCard!!.full_name)
+
+                                        OutlinedTextField(
+                                            value = limitAmount,
+                                            onValueChange = {
+                                                limitAmount = it
+                                            },
+                                            label = {
+                                                Text("Max spend per week (UGX)")
+                                            }
+                                        )
+
+                                        Text(text = "Leave empty to remove the limit.")
+                                    }
+                                },
+                                confirmButton = {
+
+                                    Button(
+                                        onClick = {
+                                            // Handle confirmation
+                                            viewModel.setCardLimit(selectedCard!!.public_id, limitAmount)
+                                        }
+                                    ) {
+
+                                        Text("Save")
+                                    }
+                                },
+                                dismissButton = {
+
+                                    OutlinedButton(
+                                        onClick = {
+                                            viewModel.closeSetLimitDialog()
+                                        }
+                                    ) {
+
+                                        Text("Cancel")
+                                    }
+                                }
+                            )
                         }
 
                     }
@@ -420,66 +461,63 @@ fun CardsScreen(
                 }
             )
 
-            // TOP RIGHT (Example action button)
-            FloatingActionButton(
-                onClick = {
-                    viewModel.openLinkCardDialog()
-                },
-                containerColor = Color(0xFFA57100),
-                contentColor = Color.White,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add"
-                )
-            }
-
-            LinkFamilyMemberDialog(
-                    showDialog = stateLinkCard.showDialog,
-
-                    phoneNumber = stateLinkCard.phoneNumber,
-                    relationship = stateLinkCard.relationship,
-
-                    allowTopUp = stateLinkCard.allowTopUp,
-                    viewBalance = stateLinkCard.viewBalance,
-                    viewHistory = stateLinkCard.viewHistory,
-                    freezeCard = stateLinkCard.freezeCard,
-
-                    relationshipOptions = stateLinkCard.relationshipOptions,
-
-                    onPhoneNumberChange = viewModel::updatePhone,
-                    onRelationshipChange = viewModel::updateRelationship,
-
-                    onAllowTopUpChange = viewModel::updateAllowTopUp,
-                    onViewBalanceChange = viewModel::updateViewBalance,
-                    onViewHistoryChange = viewModel::updateViewHistory,
-                    onFreezeCardChange = viewModel::updateFreezeCard,
-
-                    onDismiss = {
-                        viewModel.closeLinkCardDialog()
-                    },
-                    onConfirm = {
-                        viewModel.LinkChildCard(
-                            stateLinkCard.phoneNumber,
-                            stateLinkCard.relationship,
-                            stateLinkCard.allowTopUp,
-                            stateLinkCard.viewBalance,
-                            stateLinkCard.viewHistory,
-                            stateLinkCard.freezeCard
-                        )
-                    }
+            AutoDismissFailureDialog(
+                showDialog = FailureDialog,
+                message = "",
+                onDismiss = {
+                    viewModel.closeFailureDialog()
+                }
             )
+
+
+            if(stateLinkCard.showDialog){
+                selectedCard?.let { card ->
+                    LinkFamilyMemberDialog(
+                        card = card,
+                        phoneNumber = stateLinkCard.phoneNumber,
+                        relationship = stateLinkCard.relationship,
+
+                        allowTopUp = stateLinkCard.allowTopUp,
+                        viewBalance = stateLinkCard.viewBalance,
+                        viewHistory = stateLinkCard.viewHistory,
+                        freezeCard = stateLinkCard.freezeCard,
+
+                        relationshipOptions = stateLinkCard.relationshipOptions,
+
+                        onPhoneNumberChange = viewModel::updatePhone,
+                        onRelationshipChange = viewModel::updateRelationship,
+
+                        onAllowTopUpChange = viewModel::updateAllowTopUp,
+                        onViewBalanceChange = viewModel::updateViewBalance,
+                        onViewHistoryChange = viewModel::updateViewHistory,
+                        onFreezeCardChange = viewModel::updateFreezeCard,
+
+                        onDismiss = {
+                            viewModel.closeLinkCardDialog()
+                        },
+                        onConfirm = {
+                            viewModel.LinkChildCard(
+                                card.phone,
+                                stateLinkCard.relationship,
+                                stateLinkCard.allowTopUp,
+                                stateLinkCard.viewBalance,
+                                stateLinkCard.viewHistory,
+                                stateLinkCard.freezeCard
+                            )
+                        }
+                    )
+
+                }
+            }
 
 
         }
     }
 }
 
+
 @Composable
-fun ChildCard(card: LinkedCardItem, viewModel: CardsViewModel, navController: NavController, showChildBalance: Boolean, childCardBalanceUiState: ChildCardBalanceUiState) {
+fun ShowFamilyCards(card: RelationshipItem, viewModel: CardsViewModel) {
 
     Card(
         modifier = Modifier
@@ -487,7 +525,7 @@ fun ChildCard(card: LinkedCardItem, viewModel: CardsViewModel, navController: Na
             .padding(5.dp),
         shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 4.dp
+            defaultElevation = 1.dp
         ),
         colors = CardDefaults.cardColors(
             containerColor = Color.White
@@ -519,7 +557,7 @@ fun ChildCard(card: LinkedCardItem, viewModel: CardsViewModel, navController: Na
                     Text(
                         text = extractInitials(card.full_name),
                         color = Color.White,
-                        fontSize = 22.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -533,7 +571,7 @@ fun ChildCard(card: LinkedCardItem, viewModel: CardsViewModel, navController: Na
 
                     Text(
                         text = card.full_name,
-                        fontSize = 22.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF14213D)
                     )
@@ -542,16 +580,115 @@ fun ChildCard(card: LinkedCardItem, viewModel: CardsViewModel, navController: Na
 
                     Text(
                         text = card.phone,
+                        fontSize = 16.sp,
+                        color = Color(0xFF5A6C8F)
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+
+                }
+
+                // Manage Icon
+                IconButton(
+                    onClick = {
+                        // Send Link request
+                        viewModel.openLinkCardDialog(card)
+                    },
+                    modifier = Modifier
+                        .background(
+                            color = Color(0xFFE9A001),
+                            shape = CircleShape
+                        )
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        tint = Color.White
+                    )
+                }
+            }
+
+
+        }
+    }
+}
+
+@Composable
+fun PendingChildCard(card: RelationshipItem) {
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(5.dp),
+        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 1.dp
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        )
+    ) {
+
+        Column {
+
+            // TOP SECTION
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = 20.dp,
+                        vertical = 20.dp
+                    ),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                // Avatar
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF0099C8)),
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    Text(
+                        text = extractInitials(card.full_name),
+                        color = Color.White,
                         fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(14.dp))
+
+                // User Details
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+
+                    Text(
+                        text = card.full_name,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF14213D)
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = card.phone,
+                        fontSize = 16.sp,
                         color = Color(0xFF5A6C8F)
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = "${card.relationship_type} · ${card.account_type}",
+                        text = "Waiting for Acceptance",
                         fontSize = 16.sp,
-                        color = Color(0xFF8D99AE)
+                        color = Color(0xFFA57100)
                     )
                 }
 
@@ -559,7 +696,117 @@ fun ChildCard(card: LinkedCardItem, viewModel: CardsViewModel, navController: Na
                 IconButton(
                     onClick = {
                         // delete card
-                        viewModel.openDeleteCardDialog()
+
+                    }
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = null,
+                        tint = Color.Red
+                    )
+                }
+            }
+
+        }
+    }
+}
+
+@Composable
+fun ChildCard(card: RelationshipItem, viewModel: CardsViewModel, navController: NavController, showChildBalance: Boolean, childCardBalanceUiState: ChildCardBalanceUiState) {
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(5.dp),
+        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 1.dp
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        )
+    ) {
+
+        Column {
+
+            // TOP SECTION
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = 20.dp,
+                        vertical = 20.dp
+                    ),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                // Avatar
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF0099C8)),
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    Text(
+                        text = extractInitials(card.full_name),
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(14.dp))
+
+                // User Details
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+
+                    Text(
+                        text = card.full_name,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF14213D)
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = card.phone,
+                        fontSize = 16.sp,
+                        color = Color(0xFF5A6C8F)
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "${card.i_manage_them.relationship_type} · ${card.account_type}",
+                        fontSize = 14.sp,
+                        color = Color(0xFF8D99AE)
+                    )
+
+                    HorizontalDivider(
+                        color = Color(0xFFF0F0F0),
+                        thickness = 1.dp
+                    )
+
+                    Text(
+                        text = "Weekly Limit: ${card.i_manage_them.weekly_spend_limit}",
+                        fontSize = 14.sp,
+                        color = Color(0xFF8D99AE),
+                        modifier = Modifier.padding(top = 5.dp)
+                    )
+
+                }
+
+                // Delete Icon
+                IconButton(
+                    onClick = {
+                        // delete card
+                        viewModel.openDeleteCardDialog(card)
                     }
                 ) {
 
@@ -576,13 +823,31 @@ fun ChildCard(card: LinkedCardItem, viewModel: CardsViewModel, navController: Na
             )
 
             // AMOUNT
-            if(showChildBalance){
-                Text(
-                    text = "UGX ${childCardBalanceUiState.balance}",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
+            if(showChildBalance && card.public_id == childCardBalanceUiState.child_public_id){
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            horizontal = 20.dp,
+                            vertical = 20.dp,
+                        ),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Balance",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF8D99AE)
+                    )
+                    Text(
+                        text = "UGX ${childCardBalanceUiState.balance}",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                }
+
             }
 
             HorizontalDivider(
@@ -597,42 +862,46 @@ fun ChildCard(card: LinkedCardItem, viewModel: CardsViewModel, navController: Na
                     .height(72.dp)
             ) {
 
-                ActionItem(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Default.KeyboardArrowUp,
-                    text = "Send",
-                    color = Color(0xFF00A651),
-                    onClick = {
-                        // send money to the card
-                        viewModel.openSendDialog()
-                    }
-                )
+                if(!card.card_frozen){
+                    ActionItem(
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Default.KeyboardArrowUp,
+                        text = "Send",
+                        color = Color(0xFF00A651),
+                        onClick = {
+                            // send money to the card
+                            viewModel.openSendDialog(card)
+                        }
+                    )
+                }
 
                 VerticalDivider()
+                if(!card.card_frozen){
+                    if(showChildBalance && card.public_id == childCardBalanceUiState.child_public_id){
+                        ActionItem(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.CheckCircle,
+                            text = "Hide",
+                            color = Color(0xFF0057FF),
+                            onClick = {
+                                // hide balance
+                                viewModel.hideChildCardBalance()
+                            }
+                        )
+                    }else{
+                        ActionItem(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.CheckCircle,
+                            text = "Balance",
+                            color = Color(0xFF0057FF),
+                            onClick = {
+                                // show and hide balance
+                                viewModel.showChildCardBalance(card)
+                                viewModel.getChildCardBalance(card.public_id)
+                            }
+                        )
+                    }
 
-                if(showChildBalance){
-                    ActionItem(
-                        modifier = Modifier.weight(1f),
-                        icon = Icons.Default.CheckCircle,
-                        text = "Hide",
-                        color = Color(0xFF0057FF),
-                        onClick = {
-                            // hide balance
-                            viewModel.hideChildCardBalance()
-                        }
-                    )
-                }else{
-                    ActionItem(
-                        modifier = Modifier.weight(1f),
-                        icon = Icons.Default.CheckCircle,
-                        text = "Balance",
-                        color = Color(0xFF0057FF),
-                        onClick = {
-                            // show and hide balance
-                            viewModel.showChildCardBalance()
-                            viewModel.getChildCardBalance(card.child_public_id)
-                        }
-                    )
                 }
 
                 VerticalDivider()
@@ -644,14 +913,14 @@ fun ChildCard(card: LinkedCardItem, viewModel: CardsViewModel, navController: Na
                     color = Color(0xFF4B5563),
                     onClick = {
                         // show transaction history
-                        navigateTo(navController, "childCardHistory/${card.child_public_id}")
+                        navigateTo(navController, "childCardHistory/${card.public_id}")
                     }
                 )
 
                 VerticalDivider()
 
-                if(card.can_freeze){
-                    if(card.card_frozen_by_parent){
+                if(card.i_manage_them.can_freeze){
+                    if(card.card_frozen){
                         ActionItem(
                             modifier = Modifier.weight(1f),
                             icon = Icons.Default.Lock,
@@ -659,7 +928,7 @@ fun ChildCard(card: LinkedCardItem, viewModel: CardsViewModel, navController: Na
                             color = Color(0xFFA57100),
                             onClick = {
                                 // unfreeze card
-                                viewModel.unFreezeCard(card.child_public_id)
+                                viewModel.unFreezeCard(card.public_id)
                             }
                         )
                     }else{
@@ -670,7 +939,7 @@ fun ChildCard(card: LinkedCardItem, viewModel: CardsViewModel, navController: Na
                             color = Color(0xFFFF1E38),
                             onClick = {
                                 // freeze card
-                                viewModel.freezeCard(card.child_public_id)
+                                viewModel.freezeCard(card.public_id)
                             }
                         )
                     }
@@ -684,45 +953,50 @@ fun ChildCard(card: LinkedCardItem, viewModel: CardsViewModel, navController: Na
             )
 
             // BOTTOM SECTION
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        // limit amount to spend
-                        viewModel.openSetLimitDialog()
-                    }
-                    .padding(
-                        horizontal = 18.dp,
-                        vertical = 16.dp
-                    ),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            if(!card.card_frozen){
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            // limit amount to spend
+                            viewModel.openSetLimitDialog(card)
+                        }
+                        .padding(
+                            horizontal = 18.dp,
+                            vertical = 16.dp
+                        ),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
 
-                Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = null,
-                    tint = Color(0xFF94A3B8),
-                    modifier = Modifier.size(18.dp)
-                )
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = Color(0xFF94A3B8),
+                        modifier = Modifier.size(18.dp)
+                    )
 
-                Spacer(modifier = Modifier.width(10.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
 
-                Text(
-                    text = "Set weekly limit",
-                    color = Color(0xFF8D99AE),
-                    fontSize = 16.sp,
-                    modifier = Modifier.weight(1f)
-                )
+                    Text(
+                        text = "Set weekly limit",
+                        color = Color(0xFF8D99AE),
+                        fontSize = 16.sp,
+                        modifier = Modifier.weight(1f)
+                    )
 
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowRight,
-                    contentDescription = null,
-                    tint = Color(0xFF94A3B8)
-                )
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = Color(0xFF94A3B8)
+                    )
+                }
             }
+
         }
     }
 }
+
+
 
 @Composable
 fun ActionItem(
@@ -747,7 +1021,7 @@ fun ActionItem(
             imageVector = icon,
             contentDescription = null,
             tint = color,
-            modifier = Modifier.size(22.dp)
+            modifier = Modifier.size(20.dp)
         )
 
         Spacer(modifier = Modifier.height(6.dp))
@@ -755,11 +1029,12 @@ fun ActionItem(
         Text(
             text = text,
             color = color,
-            fontSize = 16.sp,
+            fontSize = 14.sp,
             fontWeight = FontWeight.Medium
         )
     }
 }
+
 
 @Composable
 fun VerticalDivider() {
@@ -838,11 +1113,78 @@ fun AutoDismissSuccessDialog(
     }
 }
 
+@Composable
+fun AutoDismissFailureDialog(
+    showDialog: Boolean,
+    message: String,
+    onDismiss: () -> Unit,
+    title: String = "Failed",
+    dismissDelay: Long = 3000L
+) {
+
+    // Auto dismiss effect
+    LaunchedEffect(showDialog) {
+
+        if (showDialog) {
+
+            delay(dismissDelay)
+
+            onDismiss()
+        }
+    }
+
+    if (showDialog) {
+
+        AlertDialog(
+
+            onDismissRequest = {
+                onDismiss()
+            },
+
+            icon = {
+
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = null,
+                    tint = Color(0xFF990000),
+                    modifier = Modifier.size(52.dp)
+                )
+            },
+
+            title = {
+
+                Text(
+                    text = title,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp
+                )
+            },
+
+            text = {
+
+                Text(
+                    text = message,
+                    fontSize = 15.sp,
+                    lineHeight = 22.sp
+                )
+            },
+
+            confirmButton = {},
+
+            shape = RoundedCornerShape(22.dp),
+
+            containerColor = Color.White
+        )
+    }
+}
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LinkFamilyMemberDialog(
-    showDialog: Boolean,
+
+    card: RelationshipItem,
 
     phoneNumber: String,
     relationship: String,
@@ -865,7 +1207,6 @@ fun LinkFamilyMemberDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
-    if (!showDialog) return
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -876,7 +1217,7 @@ fun LinkFamilyMemberDialog(
 
         title = {
             Text(
-                text = "Link a Family Member",
+                text = "Send Manage Request to ${card.full_name}",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF1F2937)
@@ -895,21 +1236,10 @@ fun LinkFamilyMemberDialog(
 
                 // PHONE NUMBER
                 Text(
-                    "Their Phone Number",
+                    card.phone,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp,
                     color = Color(0xFF374151)
-                )
-
-                Spacer(Modifier.height(10.dp))
-
-                OutlinedTextField(
-                    value = phoneNumber,
-                    onValueChange = onPhoneNumberChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("e.g. 0771234567") },
-                    shape = RoundedCornerShape(16.dp),
-                    singleLine = true
                 )
 
                 Spacer(Modifier.height(24.dp))
@@ -1044,10 +1374,7 @@ fun RelationshipDropdown(
 }
 
 @Composable
-fun PermissionItem(
-    text: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
+fun PermissionItem(text: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,

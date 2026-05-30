@@ -42,12 +42,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.edutelecustomer.R
 import com.example.edutelecustomer.ui.navigation.BottomNavItem
+import com.example.edutelecustomer.ui.util.getGreeting
 
 
 @Composable
 fun AppTemplate(
     userName: String = "Daniel",
+    balanceTitle: String = "Balance",
     balance: String = "UGX 250,000",
+    balanceBelowText: String = "Wallet Balance",
     navItems: List<BottomNavItem>,
     selectedNavIndex: Int,
     onNavSelected: (Int) -> Unit,
@@ -89,7 +92,9 @@ fun AppTemplate(
 
             // Floating Balance Card
             BalanceCard(
+                balanceTitle= balanceTitle,
                 balance = balance,
+                balanceBelowText = balanceBelowText,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .offset(y = 180.dp)
@@ -129,7 +134,7 @@ fun HeaderSection(userName: String) {
                             append("EDUTELE ")
                         }
                         withStyle(style = SpanStyle(color = Color(0xFFE9A001))) {
-                            append("Pay")
+                            append("Access")
                         }
                     },
                     fontSize = 30.sp,
@@ -142,7 +147,7 @@ fun HeaderSection(userName: String) {
             modifier =  Modifier.padding(top = 18.dp, end = 18.dp),
         ) {
             Text(
-                text = "Good morning, $userName",
+                text = getGreeting(userName),
                 color = Color.White,
                 fontSize = 16.sp,
             )
@@ -152,7 +157,9 @@ fun HeaderSection(userName: String) {
 
 @Composable
 fun BalanceCard(
+    balanceTitle: String,
     balance: String,
+    balanceBelowText: String,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -173,7 +180,7 @@ fun BalanceCard(
 
         ) {
             Text(
-                text = "Balance",
+                text = balanceTitle,
                 color = Color.White,
                 fontSize = 16.sp,
                 modifier = Modifier.padding(6.dp)
@@ -188,7 +195,7 @@ fun BalanceCard(
             )
 
             Text(
-                text = "Wallet balance",
+                text = balanceBelowText,
                 color = Color.White,
                 fontSize = 14.sp,
                 modifier = Modifier.padding(6.dp)
@@ -212,7 +219,7 @@ fun BottomNavigationBar(
                 onClick = { onItemClick(index) },
                 icon = {
                     Icon(
-                        item.icon,
+                        painter = painterResource(id = item.icon),
                         contentDescription = item.label,
                         tint = if (index == selectedIndex) Color(0xFF012A56) else Color.Gray
                     )

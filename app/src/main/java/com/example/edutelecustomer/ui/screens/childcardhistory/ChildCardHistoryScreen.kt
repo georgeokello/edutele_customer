@@ -11,12 +11,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -34,11 +38,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.edutelecustomer.R
 import com.example.edutelecustomer.data.local.UserPreferences
 import com.example.edutelecustomer.data.model.cards.ChildHistoryItems
 import com.example.edutelecustomer.ui.components.AppTemplate
@@ -87,57 +93,75 @@ fun ChildCardHistoryScreen(navController: NavController, path: String) {
             if (route != currentRoute) navigateTo(navController, route)
         }
     ) {
-        Column {
-            Spacer(modifier = Modifier.height(50.dp))
-            Text(text = "Card History")
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-
-                Box(
+        Box(modifier = Modifier.fillMaxSize()){
+            Column {
+                Spacer(modifier = Modifier.height(30.dp))
+                Row(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
 
-                    when {
-                        state.isLoading -> {
-                            CircularProgressIndicator()
-                        }
+                    Text(
+                        text = "Card Transactions",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
 
-                        state.error != null -> {
-                            Text(
-                                text = state.error ?: "Unknown error",
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        }
+                    FloatingActionButton(
+                        onClick = {
+                            navigateTo(navController, "cards")
+                        },
+                        containerColor = Color(0xFF990000),
+                        contentColor = Color.White,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Back"
+                        )
+                    }
 
-                        else -> {
-                            LazyColumn(
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                items(state.childCardHistory) { transaction ->
-                                    TransactionCard(transaction, viewModel)
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+                when {
+                    state.isLoading -> {
+                        CircularProgressIndicator()
+                    }
+
+                    state.error != null -> {
+                        LaunchedEffect(state.error) {
+
+                            if (cardInfo.error == "Invalid or expired token.") {
+
+                                navController.navigate("login") {
+                                    popUpTo(0)
+                                    launchSingleTop = true
                                 }
+                            }
+                        }
+                        Text(
+                            text = "Something went wrong, Check your internet",
+                            color = Color.Gray
+                        )
+                    }
+
+                    else -> {
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(state.childCardHistory) { transaction ->
+                                TransactionCard(transaction, viewModel)
                             }
                         }
                     }
                 }
 
-                // TOP RIGHT (Example action button)
-                FloatingActionButton(
-                    onClick = {
-                        navigateTo(navController, "cards")
-                    },
-                    containerColor = Color(0xFFA57100),
-                    contentColor = Color.White,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Back"
-                    )
-                }
             }
+
+            // TOP RIGHT (Example action button)
+
         }
 
     }
@@ -150,21 +174,21 @@ fun TransactionCard(
     transaction: ChildHistoryItems,
     viewModel: ChildCardHistoryViewModel
 ) {
-    val statusText = when (transaction.status.lowercase()) {
+    val statusText = when (transaction.status?.lowercase()) {
         "posted" -> "Completed"
         "pending" -> "Pending"
         "failed" -> "Failed"
         else -> transaction.status
     }
 
-    val statusColor = when (transaction.status.lowercase()) {
+    val statusColor = when (transaction.status?.lowercase()) {
         "posted" -> Color(0xFF2E7D32)
         "pending" -> Color(0xFFF9A825)
         "failed" -> Color(0xFFC62828)
         else -> Color.Gray
     }
 
-    val statusBackground = when (transaction.status.lowercase()) {
+    val statusBackground = when (transaction.status?.lowercase() ?: "") {
         "posted" -> Color(0xFFE8F5E9)
         "pending" -> Color(0xFFFFF8E1)
         "failed" -> Color(0xFFFFEBEE)
@@ -198,18 +222,20 @@ fun TransactionCard(
 
                 Column {
 
-                    Text(
-                        text = transaction.tx_type.uppercase(),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
+                    transaction.tx_type?.let {
+                        Text(
+                            text = it.uppercase(),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = viewModel.formatTimestamp(transaction.created_at),
-                        fontSize = 13.sp,
+                        text = viewModel.formatTimestamp(transaction.created_at ?: ""),
+                        fontSize = 12.sp,
                         color = Color.Gray
                     )
                 }
@@ -220,7 +246,7 @@ fun TransactionCard(
                 ) {
 
                     Text(
-                        text = statusText,
+                        text = statusText ?: "",
                         color = statusColor,
                         modifier = Modifier.padding(
                             horizontal = 14.dp,
@@ -232,12 +258,12 @@ fun TransactionCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // AMOUNT
             Text(
                 text = "UGX ${transaction.amount}",
-                fontSize = 26.sp,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = statusColor
             )
@@ -248,12 +274,12 @@ fun TransactionCard(
                 color = Color(0xFFEAEAEA)
             )
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // DESCRIPTION
             Text(
                 text = "Reason",
-                fontSize = 13.sp,
+                fontSize = 12.sp,
                 color = Color.Gray,
                 fontWeight = FontWeight.Medium
             )
@@ -261,10 +287,10 @@ fun TransactionCard(
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = transaction.description,
-                fontSize = 15.sp,
+                text = transaction.description ?: "",
+                fontSize = 13.sp,
                 color = Color.DarkGray,
-                lineHeight = 22.sp
+                lineHeight = 20.sp
             )
         }
     }
