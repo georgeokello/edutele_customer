@@ -5,6 +5,7 @@ import com.example.edutelecustomer.data.model.cards.CardInfoResponse
 import com.example.edutelecustomer.data.model.cards.CardsResponse
 import com.example.edutelecustomer.data.model.cards.ChildCardBalanceResponse
 import com.example.edutelecustomer.data.model.cards.ChildCardHistoryResponse
+import com.example.edutelecustomer.data.model.cards.FamilyContactResponse
 import com.example.edutelecustomer.data.model.cards.LinkCardInvitationResponse
 import com.example.edutelecustomer.data.model.cards.LinkCardResponse
 import com.example.edutelecustomer.data.model.cards.LinkChildRequest
@@ -162,4 +163,24 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Body request: SendMoneyRequest
     ): Response<SendMoneyResponse>
+
+    @GET("customer/family/family-requests")
+    suspend fun listJoinFamilyRequest(
+        @Header("Authorization") token: String,
+    ): Response<FamilyContactResponse>
+
+    // accept invitation request
+    @POST("/api/customer/family/family-requests/{requester_public_id}/accept")
+    suspend fun acceptFamilyInvitation(
+        @Header("Authorization") token : String,
+        @Path("requester_public_id") requesterPublicId : String,
+    ): Response<AcceptChildCardResponse>
+
+    // decline invitation request
+    @POST("/api/customer/family/family-requests/{requester_public_id}/decline")
+    suspend fun declineFamilyInvitation(
+        @Header("Authorization") token : String,
+        @Path("requester_public_id") requesterPublicId : String,
+    ): Response<declineChildCardResponse>
+
 }

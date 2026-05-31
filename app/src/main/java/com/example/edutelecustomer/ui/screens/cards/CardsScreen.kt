@@ -72,6 +72,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.edutelecustomer.data.local.UserPreferences
+import com.example.edutelecustomer.data.model.cards.FamilyContactItems
 import com.example.edutelecustomer.data.model.cards.LinkCardInvitationItems
 import com.example.edutelecustomer.data.model.cards.RelationshipItem
 import com.example.edutelecustomer.data.model.transactions.TransactionItem
@@ -103,6 +104,8 @@ fun CardsScreen(
     val showSetLimitDialog by viewModel.showSetLimitDialog.collectAsState()
 
     val invitationState by viewModel.invitationUiState.collectAsState()
+
+    val joinFamilyInvitation by viewModel.joinInvitationUiState.collectAsState()
 
     val showDeleteCardDialog by viewModel.showDeleteCardDialog.collectAsState()
     
@@ -175,6 +178,25 @@ fun CardsScreen(
                         ) {
                             items(invitationState.invitations){ invitation ->
                                 InvitationCard(invitation, viewModel)
+                            }
+                        }
+                    }
+                }
+
+                when{
+                    joinFamilyInvitation.isLoading -> {
+                        CircularProgressIndicator()
+                    }
+                    else -> {
+                        if(joinFamilyInvitation.total != 0){
+                            Text(text = "Pending Request (${joinFamilyInvitation.total})")
+                        }
+
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(joinFamilyInvitation.familyRequest){ invitation ->
+                                JoinFamilyInvitationCard(invitation, viewModel )
                             }
                         }
                     }
@@ -1495,6 +1517,126 @@ fun InvitationCard(invitations:LinkCardInvitationItems, viewModel: CardsViewMode
                 Button(
                     onClick = {
                         viewModel.AcceptInvitation(invitations.relationship_id)
+                    },
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF2563EB),
+                        contentColor = Color.White
+                    )
+                ) {
+
+                    Text(
+                        text = "Accept",
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun JoinFamilyInvitationCard(familyRequest: FamilyContactItems, viewModel: CardsViewModel) {
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(12.dp),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFF1F5F9)
+        ),
+        border = BorderStroke(
+            width = 1.dp,
+            color = Color(0xFFBFDBFE)
+        )
+    ) {
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp)
+        ) {
+
+            // TOP SECTION
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                // PROFILE ICON
+                Box(
+                    modifier = Modifier
+                        .size(50.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFE91E63)),
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    Text(
+                        text = extractInitials(familyRequest.full_name),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(14.dp))
+
+                // USER INFO
+                Column {
+
+                    Text(
+                        text = "${familyRequest.full_name} wants to add you as a family contact",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF111827)
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = familyRequest.phone,
+                        fontSize = 14.sp,
+                        color = Color(0xFF64748B)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // BUTTONS BELOW EVERYTHING
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+
+                OutlinedButton(
+                    onClick = {
+                       // decline
+                        viewModel.DeclineFamilyInvitation(familyRequest.requester_public_id)
+                    },
+                    shape = RoundedCornerShape(14.dp),
+                    border = BorderStroke(
+                        1.dp,
+                        Color(0xFFD1D5DB)
+                    ),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Color(0xFF374151)
+                    )
+                ) {
+
+                    Text(
+                        text = "Decline",
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(10.dp))
+
+                Button(
+                    onClick = {
+                        // Accept
+                        viewModel.AcceptFamilyInvitation(familyRequest.requester_public_id)
                     },
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(

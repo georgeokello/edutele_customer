@@ -4,6 +4,7 @@ import com.example.edutelecustomer.data.model.cards.AcceptChildCardResponse
 import com.example.edutelecustomer.data.model.cards.CardsResponse
 import com.example.edutelecustomer.data.model.cards.ChildCardBalanceResponse
 import com.example.edutelecustomer.data.model.cards.ChildCardHistoryResponse
+import com.example.edutelecustomer.data.model.cards.FamilyContactResponse
 import com.example.edutelecustomer.data.model.cards.LinkCardInvitationResponse
 import com.example.edutelecustomer.data.model.cards.LinkCardResponse
 import com.example.edutelecustomer.data.model.cards.LinkChildRequest
@@ -109,6 +110,26 @@ class CardsRepository( private val api: ApiService) {
 
     suspend fun DeclineInvitation(token: String, path: Int): Response<declineChildCardResponse> {
         return api.declineInvitation(
+            "Bearer ${token}",
+            path
+        )
+    }
+
+    suspend fun listJoinFamilyRequest(token: String): Response<FamilyContactResponse>{
+        return api.listJoinFamilyRequest(
+            "Bearer $token"
+        )
+    }
+
+    suspend fun AcceptFamilyInvitation(token: String, path: String): Response<AcceptChildCardResponse> {
+        return api.acceptFamilyInvitation(
+            "Bearer ${token}",
+            path
+        )
+    }
+
+    suspend fun DeclineFamilyInvitation(token: String, path: String): Response<declineChildCardResponse> {
+        return api.declineFamilyInvitation(
             "Bearer ${token}",
             path
         )

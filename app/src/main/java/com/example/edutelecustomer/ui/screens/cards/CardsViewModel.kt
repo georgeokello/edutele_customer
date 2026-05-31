@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.edutelecustomer.data.local.UserPreferences
+import com.example.edutelecustomer.data.model.cards.FamilyContactItems
 import com.example.edutelecustomer.data.model.cards.LinkCardInvitationItems
 import com.example.edutelecustomer.data.model.cards.RelationshipItem
 import com.example.edutelecustomer.data.model.transactions.TransactionItem
@@ -25,6 +26,13 @@ data class CardsUiState(
     val isLoading: Boolean = false,
     val cards: List<RelationshipItem> = emptyList(),
     val message: String = "",
+    val error: String? = null
+)
+
+data class JoinFamilyUiState(
+    val isLoading: Boolean = false,
+    val total: Int = 0,
+    val familyRequest: List<FamilyContactItems> = emptyList(),
     val error: String? = null
 )
 
@@ -82,6 +90,9 @@ class CardsViewModel(
 
     private  val _invitationUiState = MutableStateFlow(CardInvitationUiState())
     val invitationUiState: StateFlow<CardInvitationUiState> = _invitationUiState
+
+    private  val _joinInvitationUiState = MutableStateFlow(JoinFamilyUiState())
+    val joinInvitationUiState: StateFlow<JoinFamilyUiState> = _joinInvitationUiState
 
     var showSendDialog = MutableStateFlow(false)
         private set
@@ -165,6 +176,7 @@ class CardsViewModel(
     fun init() {
         if (_invitationUiState.value.invitations.isEmpty()) {
             fetchInvitation()
+            listJoinFamilyRequest()
             fetchCards()
         }
     }
@@ -703,6 +715,157 @@ class CardsViewModel(
             }catch (e:Exception){
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
+                    error = "Something went wrong, Try again Later"
+                )
+
+                setFailureDialog.value = true
+            }
+        }
+    }
+
+    fun listJoinFamilyRequest(){
+        viewModelScope.launch {
+            _joinInvitationUiState.value = _joinInvitationUiState.value.copy(
+                isLoading = true,
+                error = null
+            )
+            try {
+                val tokenValue = userPreferences.tokenFlow.first()
+                if(!tokenValue.isNullOrEmpty()){
+                    val response = repository.listJoinFamilyRequest(tokenValue)
+                    if(response.isSuccessful){
+                        val invitation = response.body()?.items ?: emptyList()
+                        val total = response.body()?.total ?: 0
+                        _joinInvitationUiState.value = _joinInvitationUiState.value.copy(
+                            isLoading = false,
+                            familyRequest =  invitation,
+                            total = total,
+                        )
+                        if(invitation.isEmpty()){
+                            _joinInvitationUiState.value = _joinInvitationUiState.value.copy(
+                                isLoading = false
+                            )
+                        }
+                    } else {
+                        val errorBody = response.errorBody()?.string()
+
+                        val errorDetail = errorBody?.let {
+                            try {
+                                JSONObject(it).getString("detail")
+                            } catch (e: Exception) {
+                                "Unknown error, Try again Later"
+                            }
+                        }
+
+                        _joinInvitationUiState.value = _joinInvitationUiState.value.copy(
+                            error = errorDetail,
+                            isLoading = false
+
+                        )
+                    }
+                }else{
+                    _joinInvitationUiState.value = _joinInvitationUiState.value.copy(
+                        isLoading = false,
+                        error = "No Token Found"
+                    )
+                }
+            }catch (e:Exception){
+                _joinInvitationUiState.value = _joinInvitationUiState.value.copy(
+                    isLoading = false,
+                    error = "Something went wrong, Try again Later"
+                )
+            }
+        }
+    }
+
+    fun AcceptFamilyInvitation(requesterPublicId: String){
+        viewModelScope.launch {
+            try {
+                val tokenValue = userPreferences.tokenFlow.first()
+                if(!tokenValue.isNullOrEmpty()){
+                    val response = repository.AcceptFamilyInvitation(
+                        tokenValue, requesterPublicId
+                    )
+                    if(response.isSuccessful){
+                        setSuccessDialog.value = true
+                        _joinInvitationUiState.value = _joinInvitationUiState.value.copy(
+                            familyRequest = emptyList(),
+                            total = 0
+                        )
+                        fetchInvitation()
+                        fetchCards()
+                        listJoinFamilyRequest()
+                    }else{
+                        val errorBody = response.errorBody()?.string()
+
+                        val errorDetail = errorBody?.let {
+                            try {
+                                JSONObject(it).getString("detail")
+                            } catch (e: Exception) {
+                                "Unknown error, Try again Later"
+                            }
+                        }
+
+                        _joinInvitationUiState.value = _joinInvitationUiState.value.copy(
+                            error = errorDetail,
+                            isLoading = false
+
+                        )
+                        setFailureDialog.value = true
+                    }
+
+                }
+            }catch (e: Exception){
+                _joinInvitationUiState.value = _joinInvitationUiState.value.copy(
+                    error = "Something went wrong, Try again Later"
+                )
+                setFailureDialog.value = true
+            }
+        }
+    }
+
+    fun DeclineFamilyInvitation(requesterPublicId: String){
+        viewModelScope.launch {
+            try {
+                val tokenValue = userPreferences.tokenFlow.first()
+                if(!tokenValue.isNullOrEmpty()){
+                    val response = repository.DeclineFamilyInvitation(
+                        tokenValue, requesterPublicId
+                    )
+                    if(response.isSuccessful){
+                        setSuccessDialog.value = true
+                        _joinInvitationUiState.value = _joinInvitationUiState.value.copy(
+                            familyRequest = emptyList(),
+                            total = 0
+
+                        )
+                        fetchInvitation()
+                        fetchCards()
+                    }else{
+                        val errorBody = response.errorBody()?.string()
+
+                        val errorDetail = errorBody?.let {
+                            try {
+                                JSONObject(it).getString("detail")
+                            } catch (e: Exception) {
+                                "Unknown error, Try again Later"
+                            }
+                        }
+
+                        _joinInvitationUiState.value = _joinInvitationUiState.value.copy(
+                            error = errorDetail,
+                            isLoading = false
+
+                        )
+                        setFailureDialog.value = true
+                    }
+
+                }
+            }catch (e: Exception){
+
+                Log.e("DECLINE_ERROR", "Error", e)
+
+                _joinInvitationUiState.value = _joinInvitationUiState.value.copy(
                     error = "Something went wrong, Try again Later"
                 )
 
