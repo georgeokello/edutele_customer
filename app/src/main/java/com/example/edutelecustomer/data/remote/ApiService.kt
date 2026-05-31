@@ -19,6 +19,10 @@ import com.example.edutelecustomer.data.model.cards.unfreezeResponse
 import com.example.edutelecustomer.data.model.login.LoginDetailsResponse
 import com.example.edutelecustomer.data.model.login.LoginRequest
 import com.example.edutelecustomer.data.model.qrcode.GenerateQrCodeResponse
+import com.example.edutelecustomer.data.model.sendmoney.PhoneLookUpRequest
+import com.example.edutelecustomer.data.model.sendmoney.PhoneLookUpResponse
+import com.example.edutelecustomer.data.model.sendmoney.SendMoneyRequest
+import com.example.edutelecustomer.data.model.sendmoney.SendMoneyResponse
 import com.example.edutelecustomer.data.model.transactions.TransactionsResponse
 import retrofit2.Response
 import retrofit2.http.Body
@@ -28,6 +32,7 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface ApiService {
 
@@ -145,4 +150,16 @@ interface ApiService {
         @Path("relationship_id") relationshipId : Int,
     ): Response<declineChildCardResponse>
 
+    // look up phone number
+    @GET("customer/transfers/lookup")
+    suspend fun lookUpPhoneNumber(
+        @Header("Authorization") token: String,
+        @Query("phone") phone: String
+    ): Response<PhoneLookUpResponse>
+
+    @POST("customer/transfers/send")
+    suspend fun SendMoney(
+        @Header("Authorization") token: String,
+        @Body request: SendMoneyRequest
+    ): Response<SendMoneyResponse>
 }

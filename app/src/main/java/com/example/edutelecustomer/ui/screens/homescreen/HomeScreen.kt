@@ -178,7 +178,7 @@ fun HomeScreen(
                             }
                         }
                         Text(
-                            text = "Something went wrong, Check your internet",
+                            text = "${cardInfo.error}",
                             color = Color.Gray
                         )
                     }

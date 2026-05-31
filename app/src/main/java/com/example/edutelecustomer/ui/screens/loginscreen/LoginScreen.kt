@@ -173,11 +173,11 @@ fun LoginScreen(
                         Text(
                             text = "Sign In",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
+                            fontSize = 16.sp,
                         )
                     }
                 }
-
+                Spacer(modifier = Modifier.height(4.dp))
                 // ERROR
                 state.error?.let {
 

@@ -77,7 +77,7 @@ class HistoryViewModel(
                             try {
                                 JSONObject(it).getString("detail")
                             } catch (e: Exception) {
-                                "Unknown error"
+                                "Unknown error, Try again Later"
                             }
                         }
 
@@ -98,7 +98,7 @@ class HistoryViewModel(
 
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = e.message ?: "Failed to load transactions"
+                    error = "Something went wrong, Try again Later"
                 )
             }
         }

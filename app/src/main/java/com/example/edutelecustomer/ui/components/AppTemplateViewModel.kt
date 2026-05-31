@@ -77,12 +77,12 @@ class AppTemplateViewModel(
                             try {
                                 JSONObject(it).getString("detail")
                             } catch (e: Exception) {
-                                "Unknown error"
+                                "Unknown error, Try again Later"
                             }
                         }
 
                         _cardInfoUiState.value = _cardInfoUiState.value.copy(
-                            error = errorDetail ?: "Unknown Server error",
+                            error = errorDetail,
                             isLoading = false
                         )
                     }
@@ -97,7 +97,7 @@ class AppTemplateViewModel(
             } catch (e: Exception) {
 
                 _cardInfoUiState.value = _cardInfoUiState.value.copy(
-                    error = e.message,
+                    error = "Try again Later",
                     isLoading = false
                 )
             }

@@ -133,7 +133,7 @@ fun ChildCardHistoryScreen(navController: NavController, path: String) {
                     state.error != null -> {
                         LaunchedEffect(state.error) {
 
-                            if (cardInfo.error == "Invalid or expired token.") {
+                            if (state.error == "Invalid or expired token.") {
 
                                 navController.navigate("login") {
                                     popUpTo(0)
@@ -142,7 +142,7 @@ fun ChildCardHistoryScreen(navController: NavController, path: String) {
                             }
                         }
                         Text(
-                            text = "Something went wrong, Check your internet",
+                            text = "${state.error}",
                             color = Color.Gray
                         )
                     }

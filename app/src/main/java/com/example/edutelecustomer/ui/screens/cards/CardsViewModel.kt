@@ -210,7 +210,7 @@ class CardsViewModel(
                             try {
                                 JSONObject(it).getString("detail")
                             } catch (e: Exception) {
-                                "Unknown error"
+                                "Unknown error, Try again Later"
                             }
                         }
 
@@ -235,7 +235,7 @@ class CardsViewModel(
 
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = e.message ?: "Failed to fetch"
+                    error = "Something went wrong, Try again Later"
                 )
             }
         }
@@ -272,7 +272,7 @@ class CardsViewModel(
                             try {
                                 JSONObject(it).getString("detail")
                             } catch (e: Exception) {
-                                "Unknown error"
+                                "Unknown error, Try again Later"
                             }
                         }
 
@@ -291,7 +291,7 @@ class CardsViewModel(
             }catch (e:Exception){
                 _invitationUiState.value = _invitationUiState.value.copy(
                     isLoading = false,
-                    error = "Failed to fetch invitations"
+                    error = "Something went wrong, Try again Later"
                 )
             }
         }
@@ -320,7 +320,7 @@ class CardsViewModel(
                             try {
                                 JSONObject(it).getString("detail")
                             } catch (e: Exception) {
-                                "Unknown error"
+                                "Unknown error, Try again Later"
                             }
                         }
 
@@ -335,7 +335,7 @@ class CardsViewModel(
                 }
             }catch (e: Exception){
                 _invitationUiState.value = _invitationUiState.value.copy(
-                    error = "Failed to accept card"
+                    error = "Something went wrong, Try again Later"
                 )
                 setFailureDialog.value = true
             }
@@ -366,7 +366,7 @@ class CardsViewModel(
                             try {
                                 JSONObject(it).getString("detail")
                             } catch (e: Exception) {
-                                "Unknown error"
+                                "Unknown error, Try again Later"
                             }
                         }
 
@@ -384,7 +384,7 @@ class CardsViewModel(
                 Log.e("DECLINE_ERROR", "Error", e)
 
                 _invitationUiState.value = _invitationUiState.value.copy(
-                    error = e.message ?: "Unknown error"
+                    error = "Something went wrong, Try again Later"
                 )
 
                 setFailureDialog.value = true
@@ -418,7 +418,7 @@ class CardsViewModel(
                             try {
                                 JSONObject(it).getString("detail")
                             } catch (e: Exception) {
-                                "Unknown error"
+                                "Unknown error, Try again Later"
                             }
                         }
 
@@ -441,7 +441,7 @@ class CardsViewModel(
             }catch (e: Exception){
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = "Failed to Send Money"
+                    error = "Something went wrong, Try again Later"
                 )
                 setFailureDialog.value = true
             }
@@ -471,7 +471,7 @@ class CardsViewModel(
                             try {
                                 JSONObject(it).getString("detail")
                             } catch (e: Exception) {
-                                "Unknown error"
+                                "Unknown error, Try again Later"
                             }
                         }
 
@@ -487,7 +487,7 @@ class CardsViewModel(
             }catch (e:Exception){
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = "Failed to delete card"
+                    error = "Something went wrong, Try again Later"
                 )
                 setFailureDialog.value = true
             }
@@ -520,7 +520,7 @@ class CardsViewModel(
                             try {
                                 JSONObject(it).getString("detail")
                             } catch (e: Exception) {
-                                "Unknown error"
+                                "Unknown error, Try again Later"
                             }
                         }
 
@@ -536,7 +536,7 @@ class CardsViewModel(
             }catch (e:Exception){
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = "Failed to Set Limit"
+                    error = "Something went wrong, Try again Later"
                 )
                 setFailureDialog.value = true
             }
@@ -564,7 +564,7 @@ class CardsViewModel(
                             try {
                                 JSONObject(it).getString("detail")
                             } catch (e: Exception) {
-                                "Unknown error"
+                                "Unknown error, Try again Later"
                             }
                         }
 
@@ -580,7 +580,7 @@ class CardsViewModel(
             }catch (e:Exception){
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = "Failed to Send Link Card request"
+                    error = "Something went wrong, Try again Later"
                 )
                 setFailureDialog.value = true
             }
@@ -604,7 +604,7 @@ class CardsViewModel(
                             try {
                                 JSONObject(it).getString("detail")
                             } catch (e: Exception) {
-                                "Unknown error"
+                                "Unknown error, Try again Later"
                             }
                         }
 
@@ -620,7 +620,7 @@ class CardsViewModel(
             }catch (e:Exception){
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = "Failed to Freeze Card"
+                    error = "Something went wrong, Try again Later"
                 )
                 setFailureDialog.value = true
             }
@@ -644,7 +644,7 @@ class CardsViewModel(
                             try {
                                 JSONObject(it).getString("detail")
                             } catch (e: Exception) {
-                                "Unknown error"
+                                "Unknown error, Try again Later"
                             }
                         }
 
@@ -661,7 +661,7 @@ class CardsViewModel(
             }catch (e:Exception){
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = "Failed to Freeze Card"
+                    error = "Something went wrong, Try again Later"
                 )
                 setFailureDialog.value = true
             }
@@ -687,7 +687,7 @@ class CardsViewModel(
                             try {
                                 JSONObject(it).getString("detail")
                             } catch (e: Exception) {
-                                "Unknown error"
+                                "Unknown error, Try again Later"
                             }
                         }
 
@@ -703,7 +703,7 @@ class CardsViewModel(
             }catch (e:Exception){
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = "Failed to get Card Balance"
+                    error = "Something went wrong, Try again Later"
                 )
 
                 setFailureDialog.value = true

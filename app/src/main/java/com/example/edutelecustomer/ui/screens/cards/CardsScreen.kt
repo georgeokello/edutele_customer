@@ -186,9 +186,9 @@ fun CardsScreen(
                     }
 
                     state.error != null -> {
-                        LaunchedEffect(cardInfo.error) {
+                        LaunchedEffect(state.error) {
 
-                            if (cardInfo.error == "Invalid or expired token.") {
+                            if (state.error == "Invalid or expired token.") {
 
                                 navController.navigate("login") {
                                     popUpTo(0)
@@ -197,7 +197,7 @@ fun CardsScreen(
                             }
                         }
                         Text(
-                            text = "Something went wrong, Try Again Later",
+                            text = "${state.error}",
                             color = Color.Gray
                         )
                     }
