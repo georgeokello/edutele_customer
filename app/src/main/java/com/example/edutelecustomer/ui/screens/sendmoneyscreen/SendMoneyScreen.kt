@@ -428,6 +428,8 @@ fun SendMoneyScreen(navController: NavController) {
                                     viewModel.closeSuccessDialog()
                                 },
 
+                                shape = RoundedCornerShape(8.dp),
+
                                 icon = {
 
                                     Icon(

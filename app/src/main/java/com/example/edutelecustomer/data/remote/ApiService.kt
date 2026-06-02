@@ -109,6 +109,12 @@ interface ApiService {
 
     ):Response<LinkCardResponse>
 
+    @DELETE("customer/family/{contact_public_id}")
+    suspend fun deleteLinkRequest(
+        @Header("Authorization") token: String,
+        @Path("contact_public_id") contactPublicId: String
+    ): Response<deleteChildCardResponse>
+
     @POST("customer/family/{child_public_id}/freeze")
     suspend fun freezeCard(
         @Header("Authorization") token : String,

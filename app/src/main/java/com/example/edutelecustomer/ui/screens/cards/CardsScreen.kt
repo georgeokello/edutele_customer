@@ -242,7 +242,7 @@ fun CardsScreen(
                                 when (card.i_manage_them.status) {
 
                                     "pending" -> {
-                                        PendingChildCard(card)
+                                        PendingChildCard(card, viewModel)
                                     }
 
                                     "active" -> {
@@ -641,7 +641,7 @@ fun ShowFamilyCards(card: RelationshipItem, viewModel: CardsViewModel) {
 }
 
 @Composable
-fun PendingChildCard(card: RelationshipItem) {
+fun PendingChildCard(card: RelationshipItem, viewModel: CardsViewModel) {
 
     Card(
         modifier = Modifier
@@ -719,7 +719,7 @@ fun PendingChildCard(card: RelationshipItem) {
                 // Delete Icon
                 IconButton(
                     onClick = {
-                        // delete card
+                        viewModel.deleteLinkCardRequest(card.public_id)
                     }
                 ) {
 

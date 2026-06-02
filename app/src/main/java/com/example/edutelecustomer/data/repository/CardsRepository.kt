@@ -74,6 +74,13 @@ class CardsRepository( private val api: ApiService) {
         )
     }
 
+    suspend fun deleteLinkRequest(token: String, path: String): Response<deleteChildCardResponse> {
+        return api.deleteLinkRequest(
+            "Bearer $token",
+            path
+        )
+    }
+
     suspend fun freezeCard(token: String, path: String): Response<freezeResponse> {
         return api.freezeCard(
             "Bearer $token",

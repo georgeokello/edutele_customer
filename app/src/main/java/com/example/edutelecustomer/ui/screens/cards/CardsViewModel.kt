@@ -606,6 +606,53 @@ class CardsViewModel(
         }
     }
 
+    fun deleteLinkCardRequest(cardPublicId: String){
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+            )
+            try {
+                val tokenValue = userPreferences.tokenFlow.first()
+                if(!tokenValue.isNullOrEmpty()){
+                    val response = repository.deleteLinkRequest(tokenValue, cardPublicId)
+                    if(response.isSuccessful){
+                        closeDeleteCardDialog()
+                        dialogMessage.value = "Link Request Deleted Successfully"
+                        setSuccessDialog.value = true
+                        fetchInvitation()
+                        fetchCards()
+                    }else{
+                        val errorBody = response.errorBody()?.string()
+
+                        val errorDetail = errorBody?.let {
+                            try {
+                                JSONObject(it).getString("detail")
+                            } catch (e: Exception) {
+                                "Unknown error, Try again Later"
+                            }
+                        }
+
+                        _uiState.value = _uiState.value.copy(
+                            error = errorDetail,
+                            isLoading = false
+
+                        )
+                        dialogMessage.value = "Failed To Delete Link Request"
+                        setFailureDialog.value = true
+                    }
+
+                }
+            }catch (e:Exception){
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = "Something went wrong, Try again Later"
+                )
+            }
+        }
+
+    }
+
     fun freezeCard(childPublicId: String){
         viewModelScope.launch {
             try {
