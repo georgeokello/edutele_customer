@@ -58,8 +58,8 @@ fun LoginScreen(
                 .fillMaxWidth()
                 .padding(20.dp)
                 .widthIn(max = 420.dp),
-            shape = RoundedCornerShape(24.dp),
-            elevation = CardDefaults.cardElevation(6.dp),
+            shape = RoundedCornerShape(8.dp),
+            elevation = CardDefaults.cardElevation(1.dp),
             colors = CardDefaults.cardColors(
                 containerColor = Color.White
             )
@@ -87,7 +87,7 @@ fun LoginScreen(
                         withStyle(SpanStyle(color = Color(0xFF0156A6))) {
                             append("EDUTELE ")
                         }
-                        withStyle(SpanStyle(color = Color(0xFFE9A001))) {
+                        withStyle(SpanStyle(color = Color(0xFFCE8D00))) {
                             append("ACCESS")
                         }
                     },
@@ -107,20 +107,26 @@ fun LoginScreen(
                 OutlinedTextField(
                     value = state.email,
                     onValueChange = viewModel::onEmailChange,
-                    label = { Text("Email") },
+                    label = { Text(
+                        "Email",
+                        color = Color.Gray
+                    ) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp)
+                    shape = RoundedCornerShape(8.dp)
                 )
 
                 // PASSWORD
                 OutlinedTextField(
                     value = state.password,
                     onValueChange = viewModel::onPasswordChange,
-                    label = { Text("Password") },
+                    label = { Text(
+                        "Password",
+                        color = Color.Gray
+                    ) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(8.dp),
                     visualTransformation =
                     if (passwordVisible)
                         VisualTransformation.None
@@ -140,7 +146,8 @@ fun LoginScreen(
                                     else
                                         R.drawable.visibility_24px
                                 ),
-                                contentDescription = null
+                                contentDescription = null,
+                                tint = Color.Gray
                             )
                         }
                     }
@@ -152,7 +159,7 @@ fun LoginScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(8.dp),
                     enabled = !state.isLoading,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF0156A6),
@@ -171,7 +178,7 @@ fun LoginScreen(
                     } else {
 
                         Text(
-                            text = "Sign In",
+                            text = "Login",
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp,
                         )

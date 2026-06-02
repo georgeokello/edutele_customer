@@ -7,6 +7,7 @@ import com.example.edutelecustomer.data.local.UserPreferences
 import com.example.edutelecustomer.data.model.cards.CardInfo
 import com.example.edutelecustomer.data.model.cards.QuickStats
 import com.example.edutelecustomer.data.model.cards.RecentTransaction
+import com.example.edutelecustomer.data.model.cards.Rewards
 import com.example.edutelecustomer.data.model.cards.SpendingBreakdown
 import com.example.edutelecustomer.data.repository.AppTemplateRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,6 +29,10 @@ data class CardInfoUiState(
 
     val spendingBreakdown: List<SpendingBreakdown> = emptyList(),
 
+    val hasMoreTransactions: Boolean = false,
+
+    val rewards: Rewards? = null,
+
     val error: String? = null
 )
 
@@ -43,7 +48,7 @@ class AppTemplateViewModel(
         getCardInfo()
     }
 
-    private fun getCardInfo() {
+    fun getCardInfo() {
 
         viewModelScope.launch {
 
@@ -66,6 +71,8 @@ class AppTemplateViewModel(
                             quickStats = response.body()?.quick_stats,
                             recentTransactions = response.body()!!.recent_transactions,
                             spendingBreakdown = response.body()!!.spending_breakdown,
+                            hasMoreTransactions = response.body()!!.has_more_transactions,
+                            rewards = response.body()!!.rewards,
                             error = null
                         )
                     } else {

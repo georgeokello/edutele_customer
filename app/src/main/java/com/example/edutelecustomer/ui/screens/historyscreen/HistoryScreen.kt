@@ -69,12 +69,12 @@ fun HistoryScreen(navController: NavController) {
         Column {
             Spacer(modifier = Modifier.height(50.dp))
             Text(text = "Transaction History")
+            Spacer(modifier = Modifier.height(5.dp))
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
 
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(8.dp)
                 ) {
 
                     when {
@@ -145,9 +145,15 @@ fun TransactionCard(
         else -> Color(0xFFF5F5F5)
     }
 
+    val amountColor = if (transaction.amount.trim().startsWith("-")) {
+        Color(0xFF990000) // red
+    } else {
+        Color(0xFF16A34A) // green (or your default)
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.cardElevation(1.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
@@ -206,7 +212,7 @@ fun TransactionCard(
                 text = "UGX ${transaction.amount}",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black
+                color = amountColor
             )
 
             Spacer(modifier = Modifier.height(12.dp))

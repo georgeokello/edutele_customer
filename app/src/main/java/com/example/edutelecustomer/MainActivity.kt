@@ -76,7 +76,7 @@ fun AppNavigation(modifier: Modifier){
 
     NavHost(
         navController = navController,
-        startDestination = "login"
+        startDestination = "home"
     ){
         composable(route = "login"){
             LoginScreen(onLoginSuccess = {

@@ -4,8 +4,11 @@ data class CardInfoResponse(
     val card: CardInfo,
     val quick_stats: QuickStats,
     val recent_transactions: List<RecentTransaction>,
-    val spending_breakdown: List<SpendingBreakdown>
+    val spending_breakdown: List<SpendingBreakdown>,
+    val has_more_transactions: Boolean,
+    val rewards: Rewards
 )
+
 
 data class CardInfo(
     val card_uid: String,
@@ -46,4 +49,23 @@ data class SpendingBreakdown(
     val amount: String,
     val percent: Int,
     val color: String
+)
+
+data class Rewards(
+    val points_balance: Int,
+    val badge: Badge,
+    val next_badge: NextBadge
+)
+
+data class Badge(
+    val name: String,
+    val slug: String,
+    val points_required: Int
+)
+
+data class NextBadge(
+    val name: String,
+    val slug: String,
+    val points_required: Int,
+    val points_to_unlock: Int
 )

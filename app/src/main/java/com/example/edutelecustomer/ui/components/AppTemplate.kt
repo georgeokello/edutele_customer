@@ -133,11 +133,11 @@ fun HeaderSection(userName: String) {
                         withStyle(style = SpanStyle(color = Color.White)) {
                             append("EDUTELE ")
                         }
-                        withStyle(style = SpanStyle(color = Color(0xFFE9A001))) {
-                            append("Access")
+                        withStyle(style = SpanStyle(color = Color(0xFFCE8D00))) {
+                            append("ACCESS")
                         }
                     },
-                    fontSize = 30.sp,
+                    fontSize = 26.sp,
                     fontWeight = FontWeight.ExtraBold
                 )
             }
@@ -166,8 +166,8 @@ fun BalanceCard(
         modifier = modifier
             .fillMaxWidth()
             .fillMaxHeight(0.18f),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(6.dp),
+        shape = RoundedCornerShape(8.dp),
+        elevation = CardDefaults.cardElevation(1.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFF0156A6)
         )
@@ -211,7 +211,7 @@ fun BottomNavigationBar(
     onItemClick: (Int) -> Unit
 ) {
     NavigationBar(
-        containerColor = Color.White
+        containerColor = Color(0xFF012A56)
     ) {
         items.forEachIndexed { index, item ->
             NavigationBarItem(
@@ -221,14 +221,15 @@ fun BottomNavigationBar(
                     Icon(
                         painter = painterResource(id = item.icon),
                         contentDescription = item.label,
-                        tint = if (index == selectedIndex) Color(0xFF012A56) else Color.Gray
+                        tint = if (index == selectedIndex) Color(0xFFCE8D00) else Color.Gray
                     )
                 },
                 label = {
                     Text(
                         item.label,
-                        fontSize = 10.sp,
-                        color = if (index == selectedIndex) Color(0xFF012A56) else Color.Gray
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = if (index == selectedIndex) Color(0xFFCE8D00) else Color.Gray
                     )
                 },
                 colors = NavigationBarItemDefaults.colors(

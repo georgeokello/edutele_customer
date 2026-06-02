@@ -100,6 +100,9 @@ class CardsViewModel(
     var showSendConfirmDialog = MutableStateFlow(false)
         private set
 
+    var dialogMessage = MutableStateFlow("")
+        private set
+
 
     var showSetLimitDialog = MutableStateFlow(false)
         private set
@@ -181,7 +184,7 @@ class CardsViewModel(
         }
     }
 
-    fun fetchCards() {
+    private fun fetchCards() {
         viewModelScope.launch {
 
             _uiState.value = _uiState.value.copy(
@@ -253,7 +256,7 @@ class CardsViewModel(
         }
     }
 
-    fun fetchInvitation(){
+    private fun fetchInvitation(){
         viewModelScope.launch {
             _invitationUiState.value = _invitationUiState.value.copy(
                 isLoading = true,
@@ -309,7 +312,7 @@ class CardsViewModel(
         }
     }
 
-    fun AcceptInvitation(relationshipId: Int){
+    fun acceptInvitation(relationshipId: Int){
         viewModelScope.launch {
             try {
                 val tokenValue = userPreferences.tokenFlow.first()
@@ -318,6 +321,7 @@ class CardsViewModel(
                         tokenValue, relationshipId
                     )
                     if(response.isSuccessful){
+                        dialogMessage.value = "Invitation Accepted Successfully"
                         setSuccessDialog.value = true
                         _invitationUiState.value = _invitationUiState.value.copy(
                             invitations = emptyList(),
@@ -341,6 +345,7 @@ class CardsViewModel(
                             isLoading = false
 
                         )
+                        dialogMessage.value = "Failed To Accept Invitation"
                         setFailureDialog.value = true
                     }
 
@@ -349,12 +354,11 @@ class CardsViewModel(
                 _invitationUiState.value = _invitationUiState.value.copy(
                     error = "Something went wrong, Try again Later"
                 )
-                setFailureDialog.value = true
             }
         }
     }
 
-    fun DeclineInvitation(relationshipId: Int){
+    fun declineInvitation(relationshipId: Int){
         viewModelScope.launch {
             try {
                 val tokenValue = userPreferences.tokenFlow.first()
@@ -363,6 +367,7 @@ class CardsViewModel(
                         tokenValue, relationshipId
                     )
                     if(response.isSuccessful){
+                        dialogMessage.value = "Invitation Declined Successfully"
                         setSuccessDialog.value = true
                         _invitationUiState.value = _invitationUiState.value.copy(
                             invitations = emptyList(),
@@ -387,6 +392,7 @@ class CardsViewModel(
                             isLoading = false
 
                         )
+                        dialogMessage.value = "Failed To Decline Card"
                         setFailureDialog.value = true
                     }
 
@@ -399,12 +405,11 @@ class CardsViewModel(
                     error = "Something went wrong, Try again Later"
                 )
 
-                setFailureDialog.value = true
             }
         }
     }
 
-    fun SendMoney(childPublicId: String, amount: String, pin: String, remarks: String){
+    fun sendMoney(childPublicId: String, amount: String, pin: String, remarks: String){
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
@@ -421,6 +426,7 @@ class CardsViewModel(
                             error = null
                         )
                         showSendConfirmDialog.value = false
+                        dialogMessage.value = "Money Sent Successfully"
                         setSuccessDialog.value = true
 
                     } else {
@@ -446,6 +452,7 @@ class CardsViewModel(
                         isLoading = false,
                         error = "No token found"
                     )
+                    dialogMessage.value = "Failed To Send Money"
                     setFailureDialog.value = true
 
                 }
@@ -455,13 +462,12 @@ class CardsViewModel(
                     isLoading = false,
                     error = "Something went wrong, Try again Later"
                 )
-                setFailureDialog.value = true
             }
         }
 
     }
 
-    fun deleteCard(card_public_id: String){
+    fun deleteCard(cardPublicId: String){
 
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
@@ -470,9 +476,10 @@ class CardsViewModel(
             try {
                 val tokenValue = userPreferences.tokenFlow.first()
                 if(!tokenValue.isNullOrEmpty()){
-                    val response = repository.deteleChildCard(tokenValue, card_public_id)
+                    val response = repository.deteleChildCard(tokenValue, cardPublicId)
                     if(response.isSuccessful){
                         closeDeleteCardDialog()
+                        dialogMessage.value = "Card deleted Successfully"
                         setSuccessDialog.value = true
                         fetchInvitation()
                         fetchCards()
@@ -492,6 +499,7 @@ class CardsViewModel(
                             isLoading = false
 
                         )
+                        dialogMessage.value = "Failed To Delete Card"
                         setFailureDialog.value = true
                     }
 
@@ -501,13 +509,12 @@ class CardsViewModel(
                     isLoading = false,
                     error = "Something went wrong, Try again Later"
                 )
-                setFailureDialog.value = true
             }
         }
 
     }
 
-    fun setCardLimit(card_public_id: String, limitAmount: String){
+    fun setCardLimit(cardPublicId: String, limitAmount: String){
         viewModelScope.launch {
             setSuccessDialog.value = false
             _uiState.value = _uiState.value.copy(
@@ -516,12 +523,13 @@ class CardsViewModel(
             try {
                 val tokenValue = userPreferences.tokenFlow.first()
                 if(!tokenValue.isNullOrEmpty()){
-                    val response = repository.setCardLimit(tokenValue, card_public_id, limitAmount)
+                    val response = repository.setCardLimit(tokenValue, cardPublicId, limitAmount)
                     if(response.isSuccessful){
                         showSetLimitDialog.value = false
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                         )
+                        dialogMessage.value = "Card Limit Set Successfully"
                         setSuccessDialog.value = true
                         fetchInvitation()
                         fetchCards()
@@ -541,7 +549,7 @@ class CardsViewModel(
                             isLoading = false
 
                         )
-
+                        dialogMessage.value = "Failed To Set Card Limit"
                         setFailureDialog.value = true
                     }
                 }
@@ -550,12 +558,11 @@ class CardsViewModel(
                     isLoading = false,
                     error = "Something went wrong, Try again Later"
                 )
-                setFailureDialog.value = true
             }
         }
     }
 
-    fun LinkChildCard(phoneNumber: String, relationship: String, allowTopUp: Boolean,
+    fun linkChildCard(phoneNumber: String, relationship: String, allowTopUp: Boolean,
                       viewBalance: Boolean,
                       viewHistory: Boolean,
                       freezeCard: Boolean){
@@ -565,6 +572,7 @@ class CardsViewModel(
                 if(!tokenValue.isNullOrEmpty()){
                     val response = repository.linkCard(tokenValue, phoneNumber, relationship, allowTopUp, viewBalance, viewHistory, freezeCard )
                     if(response.isSuccessful){
+                        dialogMessage.value = "Link Request Sent Successfully"
                         setSuccessDialog.value = true
                         closeLinkCardDialog()
                         fetchInvitation()
@@ -585,7 +593,7 @@ class CardsViewModel(
                             isLoading = false
 
                         )
-
+                        dialogMessage.value = "Failed To Send Link Request"
                         setFailureDialog.value = true
                     }
                 }
@@ -594,18 +602,18 @@ class CardsViewModel(
                     isLoading = false,
                     error = "Something went wrong, Try again Later"
                 )
-                setFailureDialog.value = true
             }
         }
     }
 
-    fun freezeCard(child_public_id: String){
+    fun freezeCard(childPublicId: String){
         viewModelScope.launch {
             try {
                 val tokenValue = userPreferences.tokenFlow.first()
                 if(!tokenValue.isNullOrEmpty()){
-                    val response = repository.freezeCard(tokenValue, child_public_id)
+                    val response = repository.freezeCard(tokenValue, childPublicId)
                     if(response.isSuccessful){
+                        dialogMessage.value = "Card Frozen Successfully"
                         setSuccessDialog.value = true
                         fetchInvitation()
                         fetchCards()
@@ -625,6 +633,7 @@ class CardsViewModel(
                             isLoading = false
 
                         )
+                        dialogMessage.value = "Failed To Freeze Card"
                         setFailureDialog.value = true
                     }
 
@@ -634,18 +643,18 @@ class CardsViewModel(
                     isLoading = false,
                     error = "Something went wrong, Try again Later"
                 )
-                setFailureDialog.value = true
             }
         }
     }
 
-    fun unFreezeCard(child_public_id: String){
+    fun unFreezeCard(childPublicId: String){
         viewModelScope.launch {
             try {
                 val tokenValue = userPreferences.tokenFlow.first()
                 if(!tokenValue.isNullOrEmpty()){
-                    val response = repository.unfreezeCard(tokenValue, child_public_id)
+                    val response = repository.unfreezeCard(tokenValue, childPublicId)
                     if(response.isSuccessful){
+                        dialogMessage.value = "Card Unfrozen Successfully"
                         setSuccessDialog.value = true
                         fetchInvitation()
                         fetchCards()
@@ -665,7 +674,7 @@ class CardsViewModel(
                             isLoading = false
 
                         )
-
+                        dialogMessage.value = "Failed To Unfreeze Card"
                         setFailureDialog.value = true
                     }
 
@@ -675,21 +684,20 @@ class CardsViewModel(
                     isLoading = false,
                     error = "Something went wrong, Try again Later"
                 )
-                setFailureDialog.value = true
             }
         }
     }
 
 
-    fun getChildCardBalance(child_public_id: String){
+    fun getChildCardBalance(childPublicId: String){
         viewModelScope.launch {
             try {
                 val tokenValue = userPreferences.tokenFlow.first()
                 if(!tokenValue.isNullOrEmpty()){
-                    val response = repository.getChildCardBalance(tokenValue, child_public_id)
+                    val response = repository.getChildCardBalance(tokenValue, childPublicId)
                     if(response.isSuccessful){
                         _uiChildBalanceState.value = _uiChildBalanceState.value.copy(
-                            child_public_id = child_public_id,
+                            child_public_id = childPublicId,
                             balance =  response.body()!!.balance
                         )
                     }else{
@@ -723,7 +731,7 @@ class CardsViewModel(
         }
     }
 
-    fun listJoinFamilyRequest(){
+    private fun listJoinFamilyRequest(){
         viewModelScope.launch {
             _joinInvitationUiState.value = _joinInvitationUiState.value.copy(
                 isLoading = true,
@@ -778,7 +786,7 @@ class CardsViewModel(
         }
     }
 
-    fun AcceptFamilyInvitation(requesterPublicId: String){
+    fun acceptFamilyInvitation(requesterPublicId: String){
         viewModelScope.launch {
             try {
                 val tokenValue = userPreferences.tokenFlow.first()
@@ -787,6 +795,7 @@ class CardsViewModel(
                         tokenValue, requesterPublicId
                     )
                     if(response.isSuccessful){
+                        dialogMessage.value = "Family Invitation Accepted Successfully"
                         setSuccessDialog.value = true
                         _joinInvitationUiState.value = _joinInvitationUiState.value.copy(
                             familyRequest = emptyList(),
@@ -811,6 +820,7 @@ class CardsViewModel(
                             isLoading = false
 
                         )
+                        dialogMessage.value = "Failed To Accept Invitation"
                         setFailureDialog.value = true
                     }
 
@@ -819,12 +829,11 @@ class CardsViewModel(
                 _joinInvitationUiState.value = _joinInvitationUiState.value.copy(
                     error = "Something went wrong, Try again Later"
                 )
-                setFailureDialog.value = true
             }
         }
     }
 
-    fun DeclineFamilyInvitation(requesterPublicId: String){
+    fun declineFamilyInvitation(requesterPublicId: String){
         viewModelScope.launch {
             try {
                 val tokenValue = userPreferences.tokenFlow.first()
@@ -833,6 +842,7 @@ class CardsViewModel(
                         tokenValue, requesterPublicId
                     )
                     if(response.isSuccessful){
+                        dialogMessage.value = "Invitation Declined Successfully"
                         setSuccessDialog.value = true
                         _joinInvitationUiState.value = _joinInvitationUiState.value.copy(
                             familyRequest = emptyList(),
@@ -857,6 +867,7 @@ class CardsViewModel(
                             isLoading = false
 
                         )
+                        dialogMessage.value = "Failed To Decline Invitation"
                         setFailureDialog.value = true
                     }
 
@@ -869,7 +880,6 @@ class CardsViewModel(
                     error = "Something went wrong, Try again Later"
                 )
 
-                setFailureDialog.value = true
             }
         }
     }

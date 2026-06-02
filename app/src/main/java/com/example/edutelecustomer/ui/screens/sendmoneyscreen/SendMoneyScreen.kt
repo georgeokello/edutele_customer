@@ -32,6 +32,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -51,6 +52,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -91,11 +93,16 @@ fun SendMoneyScreen(navController: NavController) {
 
     val user by viewModel.username.collectAsState()
 
+    val successDialog by viewModel.successDialog.collectAsState()
+    val amountDialog by viewModel.amountDialog.collectAsState()
+
     var phoneNumber by remember { mutableStateOf("") }
 
     var amount by remember { mutableStateOf("") }
     var remarks by remember { mutableStateOf("") }
     var pin by remember { mutableStateOf("") }
+
+    var passwordVisible by remember { mutableStateOf(false) }
 
 
     //val state by viewModel.uiState.collectAsState()
@@ -115,399 +122,426 @@ fun SendMoneyScreen(navController: NavController) {
 
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Surface(
-                        tonalElevation = 4.dp,
-                        shape = RoundedCornerShape(20.dp),
-                        modifier = Modifier.fillMaxWidth()
+                Surface(
+                    tonalElevation = 4.dp,
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color.White
+                )
+                {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
                     )
                     {
-                        Column(
-                            modifier = Modifier.padding(20.dp),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
+                        // HEADER
+                        Text(
+                            text = "Transfer",
+                            fontSize = 26.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color(0xFF0B2C5F)
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Enter recipient phone number",
+                            fontSize = 14.sp,
+                            color = Color.Gray
+                        )
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        // INPUT CARD STYLE FIELD
+                        OutlinedTextField(
+                            value = phoneNumber,
+                            onValueChange = {
+                                if (it.all { ch -> ch.isDigit() }) {
+                                    phoneNumber = it
+                                }
+                            },
+                            label = { Text("Phone Number") },
+                            placeholder = { Text("07XXXXXXXX") },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Phone,
+                                    contentDescription = null
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(60.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Number
                             )
-                        {
-                            // HEADER
-                                Text(
-                                    text = "Send Money",
-                                    fontSize = 26.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = Color(0xFF0B2C5F)
-                                )
+                        )
 
-                                Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(24.dp))
 
-                                Text(
-                                    text = "Enter recipient phone number",
-                                    fontSize = 14.sp,
-                                    color = Color.Gray
-                                )
+                        // SEND BUTTON
+                        Button(
+                            onClick = {
+                                viewModel.lookUpNumber(phoneNumber)
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp)
+                                .padding(),
+                            enabled = phoneNumber.length >= 9,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF2E7D32),
+                                contentColor = Color.White,
+                                disabledContainerColor = Color(0xFFBDBDBD)
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
 
-                                Spacer(modifier = Modifier.height(24.dp))
+                            Icon(
+                                painter = painterResource(id = R.drawable.send_money_24px),
+                                contentDescription = null
+                            )
 
-                                // INPUT CARD STYLE FIELD
-                                OutlinedTextField(
-                                    value = phoneNumber,
-                                    onValueChange = {
-                                        if (it.all { ch -> ch.isDigit() }) {
-                                            phoneNumber = it
-                                        }
-                                    },
-                                    label = { Text("Phone Number") },
-                                    placeholder = { Text("07XXXXXXXX") },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = Icons.Default.Phone,
-                                            contentDescription = null
-                                        )
-                                    },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(60.dp),
-                                    shape = RoundedCornerShape(14.dp),
-                                    keyboardOptions = KeyboardOptions(
-                                        keyboardType = KeyboardType.Number
-                                    )
-                                )
+                            Spacer(modifier = Modifier.width(8.dp))
 
-                                Spacer(modifier = Modifier.height(24.dp))
+                            Text(
+                                text = "Send Access",
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                                // SEND BUTTON
-                                Button(
-                                    onClick = {
-                                        viewModel.lookUpNumber(phoneNumber)
-                                    },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(52.dp)
-                                        .padding(),
-                                    enabled = phoneNumber.length >= 9,
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFF2E7D32),
-                                        contentColor = Color.White,
-                                        disabledContainerColor = Color(0xFFBDBDBD)
-                                    ),
-                                    shape = RoundedCornerShape(14.dp)
-                                ) {
-
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.send_money_24px),
-                                        contentDescription = null
-                                    )
-
-                                    Spacer(modifier = Modifier.width(8.dp))
-
-                                    Text(
-                                        text = "Send Money",
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            when {
-                                uiState.isLoading -> {
-                                    CircularProgressIndicator()
-                                }
-
-                                uiState.error != null -> {
-                                    LaunchedEffect(cardInfo.error) {
-
-                                        if (uiState.error == "Invalid or expired token.") {
-
-                                            navController.navigate("login") {
-                                                popUpTo(0)
-                                                launchSingleTop = true
-                                            }
-                                        }
-                                    }
-                                    Text(
-                                        text = "${uiState.error}",
-                                        color = Color.Gray
-                                    )
-                                }
+                        when {
+                            uiState.isLoading -> {
+                                CircularProgressIndicator()
                             }
 
-                            if(viewModel.amountDialog.value){
+                            uiState.error != null -> {
+                                LaunchedEffect(cardInfo.error) {
 
-                                    AlertDialog(
+                                    if (uiState.error == "Invalid or expired token.") {
 
-                                        onDismissRequest = {
-                                            viewModel.closeAmountDialog()
-                                        },
-
-                                        title = {
-
-                                            Column {
-
-                                                Text(
-                                                    text = "Send Money",
-                                                    fontSize = 22.sp,
-                                                    fontWeight = FontWeight.Bold
-                                                )
-
-                                                Spacer(modifier = Modifier.height(4.dp))
-
-                                                Text(
-                                                    text = "Complete the details below",
-                                                    color = Color.Gray,
-                                                    fontSize = 13.sp
-                                                )
-                                            }
-                                        },
-
-                                        text = {
-
-                                            Column(
-                                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                                            ) {
-
-                                                // Recipient card
-                                                Card(
-                                                    colors = CardDefaults.cardColors(
-                                                        containerColor = Color(0xFFF5F7FA)
-                                                    ),
-                                                    shape = RoundedCornerShape(12.dp)
-                                                ) {
-
-                                                    Column(
-                                                        modifier = Modifier.padding(12.dp)
-                                                    ) {
-
-                                                        Text(
-                                                            text = "Recipient",
-                                                            color = Color.Gray,
-                                                            fontSize = 12.sp
-                                                        )
-
-                                                        Text(
-                                                            text = viewModel.uiState.value.fullName,
-                                                            fontWeight = FontWeight.Bold,
-                                                            fontSize = 16.sp
-                                                        )
-
-                                                        Text(
-                                                            text = phoneNumber,
-                                                            color = Color.Gray
-                                                        )
-                                                    }
-                                                }
-
-                                                OutlinedTextField(
-                                                    value = amount,
-                                                    onValueChange = {
-                                                        if (it.all(Char::isDigit)) {
-                                                            amount = it
-                                                        }
-                                                    },
-                                                    label = {
-                                                        Text("Amount (UGX)")
-                                                    },
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    keyboardOptions = KeyboardOptions(
-                                                        keyboardType = KeyboardType.Number
-                                                    ),
-                                                    singleLine = true
-                                                )
-
-                                                OutlinedTextField(
-                                                    value = remarks,
-                                                    onValueChange = {
-                                                        remarks = it
-                                                    },
-                                                    label = {
-                                                        Text("Remarks")
-                                                    },
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    maxLines = 2
-                                                )
-
-                                                OutlinedTextField(
-                                                    value = pin,
-                                                    onValueChange = {
-                                                        if (it.all(Char::isDigit) && it.length <= 6) {
-                                                            pin = it
-                                                        }
-                                                    },
-                                                    label = {
-                                                        Text("PIN")
-                                                    },
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    visualTransformation = PasswordVisualTransformation(),
-                                                    keyboardOptions = KeyboardOptions(
-                                                        keyboardType = KeyboardType.NumberPassword
-                                                    ),
-                                                    singleLine = true
-                                                )
-                                            }
-                                        },
-
-                                        confirmButton = {
-
-                                            Button(
-                                                onClick = {
-
-                                                    // send money
-                                                    viewModel.SendMoney(viewModel.uiState.value.publicId, amount, remarks, pin)
-                                                },
-                                                enabled =
-                                                amount.isNotBlank() &&
-                                                        pin.length >= 4,
-
-                                                colors = ButtonDefaults.buttonColors(
-                                                    containerColor = Color(0xFF2E7D32),
-                                                    contentColor = Color.White
-                                                )
-                                            ) {
-
-                                                Text(
-                                                    text = "Send Money",
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                            }
-                                        },
-
-                                        dismissButton = {
-
-                                            OutlinedButton(
-                                                onClick = {
-                                                    viewModel.closeAmountDialog()
-                                                }
-                                            ) {
-
-                                                Text("Cancel")
-                                            }
+                                        navController.navigate("login") {
+                                            popUpTo(0)
+                                            launchSingleTop = true
                                         }
-                                    )
+                                    }
                                 }
+                                Text(
+                                    text = "${uiState.error}",
+                                    color = Color.Gray
+                                )
+                            }
+                        }
 
-                            if(viewModel.successDialog.value){
-                                AlertDialog(
+                        if(amountDialog){
 
-                                    onDismissRequest = {
-                                        viewModel.closeSuccessDialog()
-                                    },
+                            AlertDialog(
 
-                                    icon = {
+                                onDismissRequest = {
+                                    viewModel.openAmountDialog()
+                                },
+                                shape = RoundedCornerShape(8.dp),
 
-                                        Icon(
-                                            imageVector = Icons.Default.CheckCircle,
-                                            contentDescription = null,
-                                            tint = Color(0xFF2E7D32),
-                                            modifier = Modifier.size(64.dp)
-                                        )
-                                    },
+                                title = {
 
-                                    title = {
+                                    Column {
 
                                         Text(
-                                            text = "Transfer Successful",
+                                            text = "Transfer Access",
                                             fontSize = 22.sp,
                                             fontWeight = FontWeight.Bold
                                         )
-                                    },
 
-                                    text = {
+                                        Spacer(modifier = Modifier.height(4.dp))
 
-                                        Column(
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                                        Text(
+                                            text = "Complete the details below",
+                                            color = Color.Gray,
+                                            fontSize = 13.sp
+                                        )
+                                    }
+                                },
+
+                                text = {
+
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+
+                                        // Recipient card
+                                        Card(
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = Color(0xFFF5F7FA)
+                                            ),
+                                            shape = RoundedCornerShape(8.dp)
                                         ) {
 
-                                            Text(
-                                                text = "Your money has been sent successfully.",
-                                                color = Color.Gray
-                                            )
-
-                                            Card(
-                                                shape = RoundedCornerShape(12.dp),
-                                                colors = CardDefaults.cardColors(
-                                                    containerColor = Color(0xFFF5F7FA)
-                                                )
+                                            Column(
+                                                modifier = Modifier.padding(12.dp)
                                             ) {
 
-                                                Column(
-                                                    modifier = Modifier.padding(16.dp),
-                                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                                ) {
+                                                Text(
+                                                    text = "Recipient",
+                                                    color = Color.Gray,
+                                                    fontSize = 12.sp
+                                                )
 
-                                                    Row(
-                                                        modifier = Modifier.fillMaxWidth(),
-                                                        horizontalArrangement = Arrangement.SpaceBetween
-                                                    ) {
+                                                Text(
+                                                    text = viewModel.uiState.value.fullName,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 16.sp
+                                                )
 
-                                                        Text(
-                                                            text = "Recipient",
-                                                            color = Color.Gray
-                                                        )
-
-                                                        Text(
-                                                            text = viewModel.uiState.value.fullName,
-                                                            fontWeight = FontWeight.Bold
-                                                        )
-                                                    }
-
-                                                    Row(
-                                                        modifier = Modifier.fillMaxWidth(),
-                                                        horizontalArrangement = Arrangement.SpaceBetween
-                                                    ) {
-
-                                                        Text(
-                                                            text = "Amount",
-                                                            color = Color.Gray
-                                                        )
-
-                                                        Text(
-                                                            text = "UGX $amount",
-                                                            fontWeight = FontWeight.Bold,
-                                                            color = Color(0xFF2E7D32)
-                                                        )
-                                                    }
-
-                                                }
+                                                Text(
+                                                    text = phoneNumber,
+                                                    color = Color.Gray
+                                                )
                                             }
                                         }
-                                    },
 
-                                    confirmButton = {
-
-                                        Button(
-                                            onClick = {
-                                                // dismiss dialog
-                                                viewModel.closeSuccessDialog()
+                                        OutlinedTextField(
+                                            value = amount,
+                                            onValueChange = {
+                                                if (it.all(Char::isDigit)) {
+                                                    amount = it
+                                                }
+                                            },
+                                            label = {
+                                                Text("Value (UGX)")
                                             },
                                             modifier = Modifier.fillMaxWidth(),
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = Color(0xFF2E7D32),
-                                                contentColor = Color.White
+                                            keyboardOptions = KeyboardOptions(
+                                                keyboardType = KeyboardType.Number
+                                            ),
+                                            singleLine = true,
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+
+                                        OutlinedTextField(
+                                            value = remarks,
+                                            onValueChange = {
+                                                remarks = it
+                                            },
+                                            label = {
+                                                Text("Remarks")
+                                            },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            maxLines = 2,
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+
+                                        OutlinedTextField(
+                                            value = pin,
+                                            onValueChange = {
+                                                if (it.all(Char::isDigit) && it.length <= 6) {
+                                                    pin = it
+                                                }
+                                            },
+                                            label = {
+                                                Text("PIN")
+                                            },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            keyboardOptions = KeyboardOptions(
+                                                keyboardType = KeyboardType.NumberPassword
+                                            ),
+                                            singleLine = true,
+                                            shape = RoundedCornerShape(8.dp),
+                                            visualTransformation = if (passwordVisible) {
+                                                VisualTransformation.None
+                                            } else {
+                                                PasswordVisualTransformation()
+                                            },
+                                            trailingIcon = {
+                                                IconButton(
+                                                    onClick = { passwordVisible = !passwordVisible }
+                                                ) {
+                                                    Icon(
+                                                        painter = painterResource(
+                                                            id = if (passwordVisible)
+                                                                R.drawable.visibility_off_24px
+                                                            else
+                                                                R.drawable.visibility_24px
+                                                        ),
+                                                        contentDescription = "Toggle PIN visibility",
+                                                        tint = Color.Gray
+                                                    )
+                                                }
+                                            }
+                                        )
+                                    }
+                                },
+
+                                confirmButton = {
+
+                                    Button(
+                                        onClick = {
+
+                                            // send money
+                                            viewModel.sendMoney(viewModel.uiState.value.publicId, amount, remarks, pin)
+                                        },
+                                        enabled =
+                                        amount.isNotBlank() &&
+                                                pin.length >= 4,
+
+                                        shape = RoundedCornerShape(6.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0xFF2E7D32),
+                                            contentColor = Color.White
+                                        )
+                                    ) {
+
+                                        Text(
+                                            text = "Send Access Value",
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                },
+
+                                dismissButton = {
+
+                                    OutlinedButton(
+                                        onClick = {
+                                            viewModel.closeAmountDialog()
+                                        },
+                                        shape = RoundedCornerShape(6.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0xFF990000),
+                                            contentColor = Color.White
+                                        )
+                                    ) {
+
+                                        Text(
+                                            "Cancel",
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            )
+                        }
+
+                        if(successDialog){
+                            AlertDialog(
+
+                                onDismissRequest = {
+                                    viewModel.closeSuccessDialog()
+                                },
+
+                                icon = {
+
+                                    Icon(
+                                        imageVector = Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        tint = Color(0xFF2E7D32),
+                                        modifier = Modifier.size(64.dp)
+                                    )
+                                },
+
+                                title = {
+
+                                    Text(
+                                        text = "Transfer Successful",
+                                        fontSize = 22.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                },
+
+                                text = {
+
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+
+                                        Text(
+                                            text = "Your money has been sent successfully.",
+                                            color = Color.Gray
+                                        )
+
+                                        Card(
+                                            shape = RoundedCornerShape(8.dp),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = Color(0xFFF5F7FA)
                                             )
                                         ) {
 
-                                            Text(
-                                                text = "Done",
-                                                fontWeight = FontWeight.Bold
-                                            )
+                                            Column(
+                                                modifier = Modifier.padding(16.dp),
+                                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                                ) {
+
+                                                    Text(
+                                                        text = "Recipient",
+                                                        color = Color.Gray
+                                                    )
+
+                                                    Text(
+                                                        text = viewModel.uiState.value.fullName,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                }
+
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                                ) {
+
+                                                    Text(
+                                                        text = "Amount",
+                                                        color = Color.Gray
+                                                    )
+
+                                                    Text(
+                                                        text = "UGX $amount",
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Color(0xFF2E7D32)
+                                                    )
+                                                }
+
+                                            }
                                         }
                                     }
-                                )
-                            }
+                                },
 
+                                confirmButton = {
+
+                                    Button(
+                                        onClick = {
+                                            // dismiss dialog
+                                            viewModel.closeSuccessDialog()
+                                        },
+                                        shape = RoundedCornerShape(8.dp),
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0xFF2E7D32),
+                                            contentColor = Color.White
+                                        )
+                                    ) {
+
+                                        Text(
+                                            text = "Done",
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            )
                         }
+
                     }
                 }
-                
-                
 
                 // TOP RIGHT (Example action button)
                 FloatingActionButton(
                     onClick = {
                         navigateTo(navController, "home")
                     },
+                    shape = RoundedCornerShape(4.dp),
                     containerColor = Color(0xFF990000),
                     contentColor = Color.White,
                     modifier = Modifier

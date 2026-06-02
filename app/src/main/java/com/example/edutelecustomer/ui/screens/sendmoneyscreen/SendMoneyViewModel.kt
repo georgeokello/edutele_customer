@@ -107,7 +107,7 @@ class SendMoneyViewModel (
         }
     }
 
-    fun SendMoney(publicId: String, amount: String, remarks:String, pin:String){
+    fun sendMoney(publicId: String, amount: String, remarks:String, pin:String){
         viewModelScope.launch {
             try{
                 uiState.value = uiState.value.copy(
@@ -144,6 +144,7 @@ class SendMoneyViewModel (
                             isLoading = false
 
                         )
+                        closeAmountDialog()
 
                     }
                 }else{

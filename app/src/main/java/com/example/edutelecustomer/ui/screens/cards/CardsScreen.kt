@@ -109,8 +109,11 @@ fun CardsScreen(
 
     val showDeleteCardDialog by viewModel.showDeleteCardDialog.collectAsState()
     
-    val SuccessDialog by viewModel.setSuccessDialog.collectAsState()
-    val FailureDialog by viewModel.setFailureDialog.collectAsState()
+    val successDialog by viewModel.setSuccessDialog.collectAsState()
+
+    val dialogMessage by viewModel.dialogMessage.collectAsState()
+
+    val failureDialog by viewModel.setFailureDialog.collectAsState()
 
     val stateLinkCard by viewModel.uiLinkState.collectAsState()
 
@@ -162,7 +165,9 @@ fun CardsScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
-                Spacer(modifier = Modifier.height(40.dp))
+                Spacer(modifier = Modifier.height(42.dp))
+                Text(text = "Manage Family Cards")
+                Spacer(modifier = Modifier.height(5.dp))
 
                 when{
                     invitationState.isLoading -> {
@@ -191,7 +196,6 @@ fun CardsScreen(
                         if(joinFamilyInvitation.total != 0){
                             Text(text = "Pending Request (${joinFamilyInvitation.total})")
                         }
-
                         LazyColumn(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
@@ -359,7 +363,7 @@ fun CardsScreen(
                                     Button(
                                         onClick = {
                                             // Handle confirmation
-                                            viewModel.SendMoney(selectedCard!!.public_id, amount, pin, remarks)
+                                            viewModel.sendMoney(selectedCard!!.public_id, amount, pin, remarks)
                                         }
                                     ) {
 
@@ -476,16 +480,16 @@ fun CardsScreen(
             }
 
             AutoDismissSuccessDialog(
-                showDialog = SuccessDialog,
-                message = "",
+                showDialog = successDialog,
+                message = dialogMessage,
                 onDismiss = {
                     viewModel.closeSuccessDialog()
                 }
             )
 
             AutoDismissFailureDialog(
-                showDialog = FailureDialog,
-                message = "",
+                showDialog = failureDialog,
+                message = dialogMessage,
                 onDismiss = {
                     viewModel.closeFailureDialog()
                 }
@@ -518,7 +522,7 @@ fun CardsScreen(
                             viewModel.closeLinkCardDialog()
                         },
                         onConfirm = {
-                            viewModel.LinkChildCard(
+                            viewModel.linkChildCard(
                                 card.phone,
                                 stateLinkCard.relationship,
                                 stateLinkCard.allowTopUp,
@@ -543,9 +547,8 @@ fun ShowFamilyCards(card: RelationshipItem, viewModel: CardsViewModel) {
 
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(5.dp),
-        shape = RoundedCornerShape(24.dp),
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 1.dp
         ),
@@ -642,9 +645,8 @@ fun PendingChildCard(card: RelationshipItem) {
 
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(5.dp),
-        shape = RoundedCornerShape(24.dp),
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 1.dp
         ),
@@ -718,7 +720,6 @@ fun PendingChildCard(card: RelationshipItem) {
                 IconButton(
                     onClick = {
                         // delete card
-
                     }
                 ) {
 
@@ -739,9 +740,8 @@ fun ChildCard(card: RelationshipItem, viewModel: CardsViewModel, navController: 
 
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(5.dp),
-        shape = RoundedCornerShape(24.dp),
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 1.dp
         ),
@@ -1076,19 +1076,7 @@ fun AutoDismissSuccessDialog(
     message: String,
     onDismiss: () -> Unit,
     title: String = "Success",
-    dismissDelay: Long = 3000L
 ) {
-
-    // Auto dismiss effect
-    LaunchedEffect(showDialog) {
-
-        if (showDialog) {
-
-            delay(dismissDelay)
-
-            onDismiss()
-        }
-    }
 
     if (showDialog) {
 
@@ -1126,9 +1114,28 @@ fun AutoDismissSuccessDialog(
                 )
             },
 
-            confirmButton = {},
+            confirmButton = {
+                Button(
+                    onClick = {
+                        // dismiss dialog
+                        onDismiss()
+                    },
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF2E7D32),
+                        contentColor = Color.White
+                    )
+                ) {
 
-            shape = RoundedCornerShape(22.dp),
+                    Text(
+                        text = "Done",
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+
+            shape = RoundedCornerShape(8.dp),
 
             containerColor = Color.White
         )
@@ -1140,20 +1147,9 @@ fun AutoDismissFailureDialog(
     showDialog: Boolean,
     message: String,
     onDismiss: () -> Unit,
-    title: String = "Failed",
-    dismissDelay: Long = 3000L
+    title: String = "Failed"
 ) {
 
-    // Auto dismiss effect
-    LaunchedEffect(showDialog) {
-
-        if (showDialog) {
-
-            delay(dismissDelay)
-
-            onDismiss()
-        }
-    }
 
     if (showDialog) {
 
@@ -1191,9 +1187,28 @@ fun AutoDismissFailureDialog(
                 )
             },
 
-            confirmButton = {},
+            confirmButton = {
+                Button(
+                    onClick = {
+                        // dismiss dialog
+                        onDismiss()
+                    },
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF990000),
+                        contentColor = Color.White
+                    )
+                ) {
 
-            shape = RoundedCornerShape(22.dp),
+                    Text(
+                        text = "Close",
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+
+            shape = RoundedCornerShape(8.dp),
 
             containerColor = Color.White
         )
@@ -1232,7 +1247,7 @@ fun LinkFamilyMemberDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(28.dp),
+        shape = RoundedCornerShape(8.dp),
         containerColor = Color.White,
 
         confirmButton = {},
@@ -1329,7 +1344,7 @@ fun LinkFamilyMemberDialog(
                     OutlinedButton(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(16.dp)
+                        shape = RoundedCornerShape(6.dp)
                     ) {
                         Text("Cancel")
                     }
@@ -1337,7 +1352,7 @@ fun LinkFamilyMemberDialog(
                     Button(
                         onClick = onConfirm,
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(6.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF2563EB),
                             contentColor = Color.White
@@ -1424,7 +1439,7 @@ fun InvitationCard(invitations:LinkCardInvitationItems, viewModel: CardsViewMode
         modifier = Modifier
             .fillMaxWidth()
             .padding(12.dp),
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFFF1F5F9)
         ),
@@ -1494,9 +1509,9 @@ fun InvitationCard(invitations:LinkCardInvitationItems, viewModel: CardsViewMode
 
                 OutlinedButton(
                     onClick = {
-                        viewModel.DeclineInvitation(invitations.relationship_id)
+                        viewModel.declineInvitation(invitations.relationship_id)
                     },
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(6.dp),
                     border = BorderStroke(
                         1.dp,
                         Color(0xFFD1D5DB)
@@ -1516,9 +1531,9 @@ fun InvitationCard(invitations:LinkCardInvitationItems, viewModel: CardsViewMode
 
                 Button(
                     onClick = {
-                        viewModel.AcceptInvitation(invitations.relationship_id)
+                        viewModel.acceptInvitation(invitations.relationship_id)
                     },
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(6.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF2563EB),
                         contentColor = Color.White
@@ -1542,7 +1557,7 @@ fun JoinFamilyInvitationCard(familyRequest: FamilyContactItems, viewModel: Cards
         modifier = Modifier
             .fillMaxWidth()
             .padding(12.dp),
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFFF1F5F9)
         ),
@@ -1613,9 +1628,9 @@ fun JoinFamilyInvitationCard(familyRequest: FamilyContactItems, viewModel: Cards
                 OutlinedButton(
                     onClick = {
                        // decline
-                        viewModel.DeclineFamilyInvitation(familyRequest.requester_public_id)
+                        viewModel.declineFamilyInvitation(familyRequest.requester_public_id)
                     },
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(6.dp),
                     border = BorderStroke(
                         1.dp,
                         Color(0xFFD1D5DB)
@@ -1636,9 +1651,9 @@ fun JoinFamilyInvitationCard(familyRequest: FamilyContactItems, viewModel: Cards
                 Button(
                     onClick = {
                         // Accept
-                        viewModel.AcceptFamilyInvitation(familyRequest.requester_public_id)
+                        viewModel.acceptFamilyInvitation(familyRequest.requester_public_id)
                     },
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(6.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF2563EB),
                         contentColor = Color.White

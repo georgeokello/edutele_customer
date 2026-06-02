@@ -36,6 +36,7 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -99,6 +100,10 @@ fun HomeScreen(
 
     val currentRoute = "home"
 
+    LaunchedEffect(Unit) {
+        appViewModel.getCardInfo()
+    }
+
     AppTemplate(
         userName=user.toString(),
         balance = " ${cardInfo.card?.balance ?: "0"}",
@@ -112,9 +117,11 @@ fun HomeScreen(
         Box(Modifier.fillMaxSize()) {
 
             Column() {
-                Spacer(modifier = Modifier.height(50.dp))
+                Spacer(modifier = Modifier.height(45.dp))
                 FinanceStatCard(
                     belowText = "Total Spending",
+                    points = cardInfo.rewards?.points_balance ?: 0,
+                    badge = cardInfo.rewards?.badge?.name ?: "--",
                     number = cardInfo.quickStats?.total_spent?.value ?: "--",
                     percentage = (cardInfo.quickStats?.total_spent?.change_pct ?: "--").toString()
                 )
@@ -124,7 +131,7 @@ fun HomeScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                        .padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -143,7 +150,7 @@ fun HomeScreen(
                             containerColor = Color(0xFF2E7D32),
                             contentColor = Color.White
                         ),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(6.dp)
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.send_money_24px),
@@ -154,7 +161,7 @@ fun HomeScreen(
                         Spacer(modifier = Modifier.width(6.dp))
 
                         Text(
-                            text = "Send Money",
+                            text = "Transfer Access",
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -204,10 +211,12 @@ fun FinanceStatCard(
     number: String,
     percentage: String,
     modifier: Modifier = Modifier,
+    points: Int = 5000,
+    badge: String = "Silver",
     amountColor: Color = Color(0xFF0B2C5F),
     percentageColor: Color = Color(0xFF00A63E),
     iconBackground: Color = Color(0xFFF2F4F8),
-    iconTint: Color = Color(0xFFE9A001),
+    iconTint: Color = Color(0xFFCE8D00),
     containerColor: Color = Color.White,
     icon: Painter = painterResource(id = R.drawable.account_balance_wallet_24px)
 ) {
@@ -215,14 +224,14 @@ fun FinanceStatCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .height(120.dp),
+            .height(140.dp),
 
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(
             containerColor = containerColor
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
+            defaultElevation = 1.dp
         )
     ) {
 
@@ -232,33 +241,25 @@ fun FinanceStatCard(
                 .padding(18.dp)
         ) {
 
-            // ICON
-            Box(
+            Icon(
+                painter = icon,
+                contentDescription = null,
+                tint = iconTint,
                 modifier = Modifier
-                    .size(26.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(iconBackground),
-                contentAlignment = Alignment.Center
-            ) {
-
-                Icon(
-                    painter = icon,
-                    contentDescription = null,
-                    tint = iconTint,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-
-            // PERCENTAGE
-            Text(
-                text = percentage,
-                color = percentageColor,
-                fontWeight = FontWeight.Bold,
-                fontSize = 17.sp,
-                modifier = Modifier.align(Alignment.TopEnd)
+                    .align(Alignment.TopStart)
+                    .size(22.dp)
             )
 
-            // CONTENT
+            // TOP RIGHT
+            Text(
+                text = percentage,
+                modifier = Modifier.align(Alignment.TopEnd),
+                color = percentageColor,
+                fontWeight = FontWeight.Bold,
+                fontSize = 17.sp
+            )
+
+            // BOTTOM LEFT
             Column(
                 modifier = Modifier.align(Alignment.BottomStart)
             ) {
@@ -269,14 +270,50 @@ fun FinanceStatCard(
                     color = amountColor
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
-
                 Text(
-                    text =  belowText,
+                    text = belowText,
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
                     color = Color(0xFF6B7280)
                 )
+            }
+
+            // BOTTOM RIGHT (FIXED)
+            Column(
+                modifier = Modifier.align(Alignment.BottomEnd),
+                horizontalAlignment = Alignment.End
+            ) {
+
+                Text(
+                    text = "$points pts",
+                    color = Color(0xFFCE8D00),
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 13.sp
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Surface(
+                    shape = RoundedCornerShape(35),
+                    color = when (badge) {
+                        "Gold" -> Color(0xFFD4AF37)
+                        "Silver" -> Color(0xFFB0BEC5)
+                        else -> Color(0xFFCD7F32)
+                    }
+                ) {
+
+                    Text(
+                        text = badge,
+                        modifier = Modifier.padding(
+                            horizontal = 10.dp,
+                            vertical = 4.dp
+                        ),
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+
+
             }
         }
     }
