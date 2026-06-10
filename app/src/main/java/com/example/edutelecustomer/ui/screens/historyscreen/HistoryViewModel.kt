@@ -6,9 +6,8 @@ import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.edutelecustomer.data.local.UserPreferences
-import com.example.edutelecustomer.data.model.transactions.TransactionItem
-import com.example.edutelecustomer.data.repository.TransactionRepository
-import kotlinx.coroutines.delay
+import com.example.edutelecustomer.data.model.redemptions.RedemptionItem
+import com.example.edutelecustomer.data.repository.RedemptionHistoryRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -21,19 +20,19 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 // 📊 UI State
-data class TransactionUiState(
+data class RedemptionUiState(
     val isLoading: Boolean = false,
-    val transactions: List<TransactionItem> = emptyList(),
+    val redemption: List<RedemptionItem> = emptyList(),
     val error: String? = null
 )
 
 class HistoryViewModel(
     private val userPreferences: UserPreferences,
-    private val repository: TransactionRepository
+    private val repository: RedemptionHistoryRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(TransactionUiState())
-    val uiState: StateFlow<TransactionUiState> = _uiState
+    private val _uiState = MutableStateFlow(RedemptionUiState())
+    val uiState: StateFlow<RedemptionUiState> = _uiState
 
     val username: StateFlow<String?> =
         userPreferences.usernameFlow
@@ -43,7 +42,7 @@ class HistoryViewModel(
                 initialValue = null
             )
 
-    fun fetchTransactions() {
+    fun fetchRedemptions() {
         viewModelScope.launch {
 
             _uiState.value = _uiState.value.copy(
@@ -57,16 +56,16 @@ class HistoryViewModel(
 
                 if(!tokenValue.isNullOrEmpty()){
 
-                    val response = repository.getCustomerTransactions(tokenValue)
+                    val response = repository.getCustomerRedemptions(tokenValue)
 
                     if (response.isSuccessful) {
 
-                        val transactions =
+                        val redemptions =
                             response.body()?.items ?: emptyList()
 
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
-                            transactions = transactions
+                            redemption = redemptions
                         )
 
                     } else {

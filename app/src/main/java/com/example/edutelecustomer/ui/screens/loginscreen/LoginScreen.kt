@@ -1,6 +1,7 @@
 package com.example.edutelecustomer.ui.screens.loginscreen
 
 
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -96,7 +97,7 @@ fun LoginScreen(
                 )
 
                 Text(
-                    text = "Secure financial access for your account",
+                    text = "Secure access to your account",
                     fontSize = 13.sp,
                     color = Color.Gray
                 )
@@ -181,6 +182,29 @@ fun LoginScreen(
                             text = "Login",
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp,
+                        )
+                    }
+                }
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.CenterEnd
+                ) {
+                    TextButton(
+                        onClick = {
+                            // navigate to forgot password screen
+
+                            val url = "https://edutele-pay-frontend.pages.dev/forgot-password"
+                            val intent = Intent(Intent.ACTION_VIEW).apply {
+                                data = android.net.Uri.parse(url)
+                            }
+                            context.startActivity(intent)
+
+                        }
+                    ) {
+                        Text(
+                            "Forgot password?",
+                            color = Color(0xFF0156A6),
+                            fontSize = 13.sp
                         )
                     }
                 }

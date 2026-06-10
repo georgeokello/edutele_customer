@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.edutelecustomer.data.local.UserPreferences
 import com.example.edutelecustomer.data.remote.RetrofitInstance
-import com.example.edutelecustomer.data.repository.TransactionRepository
+import com.example.edutelecustomer.data.repository.RedemptionHistoryRepository
 
 class HistoryViewModelFactory(
     private val userPreferences: UserPreferences
@@ -13,7 +13,7 @@ class HistoryViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
 
         val api = RetrofitInstance.api
-        val repository = TransactionRepository(api)
+        val repository = RedemptionHistoryRepository(api)
 
         return HistoryViewModel(userPreferences, repository) as T
 

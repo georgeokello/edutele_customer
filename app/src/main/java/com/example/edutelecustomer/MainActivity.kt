@@ -30,7 +30,7 @@ import com.example.edutelecustomer.ui.screens.historyscreen.HistoryScreen
 import com.example.edutelecustomer.ui.screens.homescreen.HomeScreen
 import com.example.edutelecustomer.ui.screens.loginscreen.LoginScreen
 import com.example.edutelecustomer.ui.screens.qrcode.QrCodeScreen
-import com.example.edutelecustomer.ui.screens.sendmoneyscreen.SendMoneyScreen
+import com.example.edutelecustomer.ui.screens.sendaccessscreen.SendMoneyScreen
 import com.example.edutelecustomer.ui.theme.EduteleCustomerTheme
 
 
@@ -76,7 +76,7 @@ fun AppNavigation(modifier: Modifier){
 
     NavHost(
         navController = navController,
-        startDestination = "home"
+        startDestination = "login"
     ){
         composable(route = "login"){
             LoginScreen(onLoginSuccess = {

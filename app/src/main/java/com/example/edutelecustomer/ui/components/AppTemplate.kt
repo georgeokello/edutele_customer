@@ -1,11 +1,13 @@
 package com.example.edutelecustomer.ui.components
 
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -18,12 +20,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,12 +40,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.edutelecustomer.R
 import com.example.edutelecustomer.ui.navigation.BottomNavItem
 import com.example.edutelecustomer.ui.util.getGreeting
@@ -54,6 +59,7 @@ fun AppTemplate(
     navItems: List<BottomNavItem>,
     selectedNavIndex: Int,
     onNavSelected: (Int) -> Unit,
+    navController: NavController,
     content: @Composable () -> Unit
 ) {
     Scaffold(
@@ -75,7 +81,7 @@ fun AppTemplate(
 
             Column {
                 // Header Section
-                HeaderSection(userName)
+                HeaderSection(userName, navController)
 
                 Spacer(modifier = Modifier.height(5.dp)) // space for floating card
 
@@ -105,7 +111,7 @@ fun AppTemplate(
 }
 
 @Composable
-fun HeaderSection(userName: String) {
+fun HeaderSection(userName: String, navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxHeight(0.35f)
@@ -121,7 +127,7 @@ fun HeaderSection(userName: String) {
                 painter = painterResource(id = R.drawable.logo),
                 contentDescription = "Logo",
                 modifier = Modifier
-                    .size(60.dp)
+                    .size(65.dp)
                     .clip(CircleShape)
             )
 
@@ -143,14 +149,56 @@ fun HeaderSection(userName: String) {
             }
 
         }
-        Column(
-            modifier =  Modifier.padding(top = 18.dp, end = 18.dp),
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 15.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = getGreeting(userName),
-                color = Color.White,
-                fontSize = 16.sp,
-            )
+
+            Column {
+                Text(
+                    text = getGreeting(userName),
+                    color = Color.White,
+                    fontSize = 16.sp,
+                )
+            }
+
+            OutlinedButton(
+                onClick = {
+                    navController.navigate("login") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                modifier = Modifier.height(32.dp),
+                contentPadding = PaddingValues(
+                    horizontal = 8.dp,
+                    vertical = 0.dp
+                ),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = Color.White,
+                    containerColor = Color(0xFF990000)
+                ),
+                border = BorderStroke(
+                    1.dp,
+                    Color(0xFF990000)
+                ),
+                shape = RoundedCornerShape(10.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                    contentDescription = null,
+                    modifier = Modifier.size(12.dp)
+                )
+
+                Spacer(modifier = Modifier.width(4.dp))
+
+                Text(
+                    text = "Logout",
+                    fontSize = 11.sp
+                )
+            }
         }
     }
 }

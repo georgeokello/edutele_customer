@@ -2,7 +2,7 @@ package com.example.edutelecustomer.data.repository
 
 import com.example.edutelecustomer.data.model.cards.AcceptChildCardResponse
 import com.example.edutelecustomer.data.model.cards.CardsResponse
-import com.example.edutelecustomer.data.model.cards.ChildCardBalanceResponse
+import com.example.edutelecustomer.data.model.cards.ChildCardAvailableAccessResponse
 import com.example.edutelecustomer.data.model.cards.ChildCardHistoryResponse
 import com.example.edutelecustomer.data.model.cards.FamilyContactResponse
 import com.example.edutelecustomer.data.model.cards.LinkCardInvitationResponse
@@ -95,8 +95,8 @@ class CardsRepository( private val api: ApiService) {
         )
     }
 
-    suspend fun getChildCardBalance(token: String, path:String): Response<ChildCardBalanceResponse>{
-        return api.getChildCardBalance(
+    suspend fun getChildCardAvailableAccess(token: String, path:String): Response<ChildCardAvailableAccessResponse>{
+        return api.getChildCardAvailableAccess(
             "Bearer $token",
             path
         )

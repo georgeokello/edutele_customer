@@ -1,6 +1,6 @@
 package com.example.edutelecustomer.data.model.apptemplate
 
-data class BalanceResponse(
+data class AvailableAccessResponse(
     val items: List<CardItem>,
     val total: Int
 )

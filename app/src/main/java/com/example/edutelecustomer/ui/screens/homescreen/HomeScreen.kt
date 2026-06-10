@@ -2,10 +2,6 @@ package com.example.edutelecustomer.ui.screens.homescreen
 
 
 import android.annotation.SuppressLint
-import android.os.Build
-import androidx.annotation.RequiresApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,22 +16,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.material.icons.rounded.DateRange
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,10 +32,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -58,21 +43,17 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.edutelecustomer.R
 import com.example.edutelecustomer.data.local.UserPreferences
-import com.example.edutelecustomer.data.model.cards.CardInfo
-import com.example.edutelecustomer.data.model.cards.RecentTransaction
+import com.example.edutelecustomer.data.model.cards.RecentRedemptions
 import com.example.edutelecustomer.data.repository.AuthRepository
 import com.example.edutelecustomer.data.remote.RetrofitInstance
-import com.example.edutelecustomer.data.repository.AppTemplateRepository
 import com.example.edutelecustomer.ui.components.AppTemplate
 import com.example.edutelecustomer.ui.components.AppTemplateViewModel
 import com.example.edutelecustomer.ui.components.AppTemplateViewModelFactory
-import com.example.edutelecustomer.ui.components.CardInfoUiState
 import com.example.edutelecustomer.ui.navigation.navItems
-import com.example.edutelecustomer.ui.screens.childcardhistory.TransactionCard
 import com.example.edutelecustomer.ui.util.navigateTo
 
 
-@RequiresApi(Build.VERSION_CODES.O)
+
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(
@@ -106,21 +87,22 @@ fun HomeScreen(
 
     AppTemplate(
         userName=user.toString(),
-        balance = " ${cardInfo.card?.balance ?: "0"}",
+        balance = " ${cardInfo.card?.remaining ?: "0"}",
         navItems = navItems,
         selectedNavIndex = navItems.indexOfFirst { it.route == currentRoute },
         onNavSelected = { index ->
             val route = navItems[index].route
             if (route != currentRoute) navigateTo(navController, route)
-        }
+        },
+        navController = navController
     ) {
         Box(Modifier.fillMaxSize()) {
 
             Column() {
                 Spacer(modifier = Modifier.height(45.dp))
-                FinanceStatCard(
-                    belowText = "Total Spending",
-                    points = cardInfo.rewards?.points_balance ?: 0,
+                AccessStatCard(
+                    belowText = "Total Usage",
+                    points = cardInfo.rewards?.points_remaining ?: 0,
                     badge = cardInfo.rewards?.badge?.name ?: "--",
                     number = cardInfo.quickStats?.total_spent?.value ?: "--",
                     percentage = (cardInfo.quickStats?.total_spent?.change_pct ?: "--").toString()
@@ -137,7 +119,7 @@ fun HomeScreen(
                 ) {
 
                     Text(
-                        text = "Recent Transactions",
+                        text = "Recent Redemptions",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -161,7 +143,7 @@ fun HomeScreen(
                         Spacer(modifier = Modifier.width(6.dp))
 
                         Text(
-                            text = "Transfer Access",
+                            text = "Send Access",
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -170,7 +152,11 @@ fun HomeScreen(
 
                 when {
                     cardInfo.isLoading -> {
-                        CircularProgressIndicator()
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = Color.White
+                        )
                     }
 
                     cardInfo.error != null -> {
@@ -194,8 +180,8 @@ fun HomeScreen(
 
                         LazyColumn(
                         ) {
-                            items(cardInfo.recentTransactions) { transaction ->
-                                RecentHistory(transaction)
+                            items(cardInfo.recentRedemptions) { redemption ->
+                                RecentAccess(redemption)
                             }
                         }
                     }
@@ -206,7 +192,7 @@ fun HomeScreen(
 }
 
 @Composable
-fun FinanceStatCard(
+fun AccessStatCard(
     belowText: String,
     number: String,
     percentage: String,
@@ -320,16 +306,16 @@ fun FinanceStatCard(
 }
 
 @Composable
-fun RecentHistory(recentTransaction: RecentTransaction) {
+fun RecentAccess(recentRedemptions: RecentRedemptions) {
 
-    val statusColor = when (recentTransaction.status.lowercase()) {
+    val statusColor = when (recentRedemptions.status.lowercase()) {
         "success", "completed", "paid" -> Color(0xFF16A34A)
         "pending" -> Color(0xFFF59E0B)
         "failed", "declined" -> Color(0xFF990000)
         else -> Color(0xFF6B7280)
     }
 
-    val amountColor = if (recentTransaction.amount.trim().startsWith("-")) {
+    val amountColor = if (recentRedemptions.amount.trim().startsWith("-")) {
         Color(0xFF990000) // red
     } else {
         Color(0xFF16A34A) // green (or your default)
@@ -354,14 +340,14 @@ fun RecentHistory(recentTransaction: RecentTransaction) {
             ) {
 
                 Text(
-                    text = recentTransaction.activity,
+                    text = recentRedemptions.activity,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color(0xFF111827)
                 )
 
                 Text(
-                    text = recentTransaction.amount,
+                    text = recentRedemptions.amount,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = amountColor
@@ -388,20 +374,20 @@ fun RecentHistory(recentTransaction: RecentTransaction) {
                 Column {
 
                     Text(
-                        text = recentTransaction.place,
+                        text = recentRedemptions.place,
                         fontSize = 13.sp,
                         color = Color(0xFF6B7280)
                     )
 
                     Text(
-                        text = recentTransaction.date,
+                        text = recentRedemptions.date,
                         fontSize = 12.sp,
                         color = Color(0xFF9CA3AF)
                     )
                 }
 
                 Text(
-                    text = recentTransaction.status.uppercase(),
+                    text = recentRedemptions.status.uppercase(),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = statusColor

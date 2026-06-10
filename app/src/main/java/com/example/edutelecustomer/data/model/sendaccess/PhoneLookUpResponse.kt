@@ -1,4 +1,4 @@
-package com.example.edutelecustomer.data.model.sendmoney
+package com.example.edutelecustomer.data.model.sendaccess
 
 data class PhoneLookUpResponse(
     val public_id: String,

@@ -1,6 +1,6 @@
-package com.example.edutelecustomer.data.model.sendmoney
+package com.example.edutelecustomer.data.model.sendaccess
 
-data class SendMoneyResponse(
+data class SendAccessResponse(
 
     val public_id : String,
     val from_customer_public_id: String,

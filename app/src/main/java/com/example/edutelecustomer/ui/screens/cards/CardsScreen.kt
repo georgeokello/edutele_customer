@@ -20,13 +20,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Lock
@@ -41,16 +41,13 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -63,28 +60,26 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.edutelecustomer.R
 import com.example.edutelecustomer.data.local.UserPreferences
 import com.example.edutelecustomer.data.model.cards.FamilyContactItems
 import com.example.edutelecustomer.data.model.cards.LinkCardInvitationItems
 import com.example.edutelecustomer.data.model.cards.RelationshipItem
-import com.example.edutelecustomer.data.model.transactions.TransactionItem
 import com.example.edutelecustomer.ui.components.AppTemplate
 import com.example.edutelecustomer.ui.components.AppTemplateViewModel
 import com.example.edutelecustomer.ui.components.AppTemplateViewModelFactory
 import com.example.edutelecustomer.ui.navigation.navItems
-import com.example.edutelecustomer.ui.screens.historyscreen.HistoryViewModel
-import com.example.edutelecustomer.ui.screens.historyscreen.TransactionCard
 import com.example.edutelecustomer.ui.util.extractInitials
 import com.example.edutelecustomer.ui.util.navigateTo
-import kotlinx.coroutines.delay
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -117,9 +112,9 @@ fun CardsScreen(
 
     val stateLinkCard by viewModel.uiLinkState.collectAsState()
 
-    val accessChildBalance by viewModel.uiChildBalanceState.collectAsState()
+    val accessChildAvailableAccess by viewModel.uiChildAvailableAccessState.collectAsState()
 
-    val showChildCardBalance by viewModel.showChildCardBalance.collectAsState()
+    val showChildCardAvailableAccess by viewModel.showChildCardAvailableAccess.collectAsState()
 
     val appViewModel: AppTemplateViewModel = viewModel(
         factory = AppTemplateViewModelFactory(userPreferences)
@@ -127,20 +122,23 @@ fun CardsScreen(
 
     val cardInfo by appViewModel.cardInfoUiState.collectAsState()
 
+    val logoutState by appViewModel.logoutState.collectAsState()
+
     val selectedCard by viewModel.selectedCard.collectAsState()
 
     val user by viewModel.username.collectAsState()
     val currentRoute = "cards"
 
-    var amount by remember { mutableStateOf("") }
+    var accessValue by remember { mutableStateOf("") }
     var remarks by remember { mutableStateOf("") }
     var pin by remember {
         mutableStateOf("")
     }
-    var limitAmount by remember {
+    var limitAccessValue by remember {
         mutableStateOf("")
     }
 
+    var passwordVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.init()
@@ -148,13 +146,14 @@ fun CardsScreen(
 
     AppTemplate(
         userName = user.toString(),
-        balance = " ${cardInfo.card?.balance ?: 0}",
+        balance = " ${cardInfo.card?.remaining ?: 0}",
         navItems = navItems,
         selectedNavIndex = navItems.indexOfFirst { it.route == currentRoute },
         onNavSelected = { index ->
             val route = navItems[index].route
             if (route != currentRoute) navigateTo(navController, route)
-        }
+        },
+        navController = navController
     ) {
 
         Box(modifier = Modifier.fillMaxSize()) {
@@ -171,7 +170,11 @@ fun CardsScreen(
 
                 when{
                     invitationState.isLoading -> {
-                        CircularProgressIndicator()
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = Color.White
+                        )
                     }
                     else -> {
                         if(invitationState.total != 0){
@@ -190,7 +193,9 @@ fun CardsScreen(
 
                 when{
                     joinFamilyInvitation.isLoading -> {
-                        CircularProgressIndicator()
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = Color.White)
                     }
                     else -> {
                         if(joinFamilyInvitation.total != 0){
@@ -208,7 +213,9 @@ fun CardsScreen(
 
                 when {
                     state.isLoading -> {
-                        CircularProgressIndicator()
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = Color.White)
                     }
 
                     state.error != null -> {
@@ -246,19 +253,24 @@ fun CardsScreen(
                                     }
 
                                     "active" -> {
+
                                         ChildCard(
                                             card,
                                             viewModel,
                                             navController,
-                                            showChildCardBalance,
-                                            accessChildBalance
+                                            showChildCardAvailableAccess,
+                                            accessChildAvailableAccess
                                         )
+
+
                                     }
 
                                     else -> {
                                         ShowFamilyCards(card, viewModel)
                                     }
                                 }
+
+
                             }
                         }
 
@@ -268,9 +280,26 @@ fun CardsScreen(
                                 onDismissRequest = {
                                     viewModel.closeSendDialog()
                                 },
+                                shape = RoundedCornerShape(8.dp),
 
                                 title = {
-                                    Text("Sending Money To:")
+
+                                    Column {
+
+                                        Text(
+                                            text = "Send Access",
+                                            fontSize = 22.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+
+                                        Spacer(modifier = Modifier.height(4.dp))
+
+                                        Text(
+                                            text = "Complete the details below",
+                                            color = Color.Gray,
+                                            fontSize = 13.sp
+                                        )
+                                    }
                                 },
 
                                 text = {
@@ -279,16 +308,49 @@ fun CardsScreen(
                                         verticalArrangement = Arrangement.spacedBy(12.dp)
                                     ) {
 
-                                        Text(text = selectedCard!!.full_name)
+                                        // Recipient card
+                                        Card(
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = Color(0xFFF5F7FA)
+                                            ),
+                                            shape = RoundedCornerShape(8.dp)
+                                        ) {
+
+                                            Column(
+                                                modifier = Modifier.padding(12.dp)
+                                            ) {
+
+                                                Text(
+                                                    text = "Recipient",
+                                                    color = Color.Gray,
+                                                    fontSize = 12.sp
+                                                )
+
+                                                Text(
+                                                    text = selectedCard!!.full_name,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 16.sp
+                                                )
+
+                                            }
+                                        }
 
                                         OutlinedTextField(
-                                            value = amount,
+                                            value = accessValue,
                                             onValueChange = {
-                                                amount = it
+                                                if (it.all(Char::isDigit)) {
+                                                    accessValue = it
+                                                }
                                             },
                                             label = {
-                                                Text("Amount")
-                                            }
+                                                Text("Value (UGX)")
+                                            },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            keyboardOptions = KeyboardOptions(
+                                                keyboardType = KeyboardType.Number
+                                            ),
+                                            singleLine = true,
+                                            shape = RoundedCornerShape(8.dp)
                                         )
 
                                         OutlinedTextField(
@@ -298,7 +360,10 @@ fun CardsScreen(
                                             },
                                             label = {
                                                 Text("Remarks")
-                                            }
+                                            },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            maxLines = 2,
+                                            shape = RoundedCornerShape(8.dp)
                                         )
                                     }
                                 },
@@ -311,11 +376,21 @@ fun CardsScreen(
                                             // Handle confirmation
                                             viewModel.openSendConfirmDialog(selectedCard!!)
 
+                                        },
+                                        enabled =
+                                        accessValue.isNotBlank(),
 
-                                        }
+                                        shape = RoundedCornerShape(6.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0xFF2E7D32),
+                                            contentColor = Color.White
+                                        )
                                     ) {
 
-                                        Text("Send")
+                                        Text(
+                                            text = "Send Access",
+                                            fontWeight = FontWeight.Bold
+                                        )
                                     }
                                 },
 
@@ -324,36 +399,101 @@ fun CardsScreen(
                                     OutlinedButton(
                                         onClick = {
                                             viewModel.closeSendDialog()
-                                        }
+                                        },
+                                        shape = RoundedCornerShape(6.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0xFF990000),
+                                            contentColor = Color.White
+                                        )
                                     ) {
 
-                                        Text("Cancel")
+                                        Text(
+                                            "Cancel",
+                                            fontWeight = FontWeight.Bold
+                                        )
                                     }
                                 }
                             )
+
+
                         }
 
                         if(showSendConfirmDialog && selectedCard != null){
                             AlertDialog(
                                 onDismissRequest = { /*TODO*/ },
                                 title = {
-                                    Text(text = "Comfirm Transfer")
+                                    Text(text = "Confirm Transfer of $accessValue")
                                 },
+                                shape = RoundedCornerShape(8.dp),
                                 text = {
 
                                     Column(
                                         verticalArrangement = Arrangement.spacedBy(12.dp)
                                     ) {
 
-                                        Text(text = selectedCard!!.full_name)
+                                        // Recipient card
+                                        Card(
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = Color(0xFFF5F7FA)
+                                            ),
+                                            shape = RoundedCornerShape(8.dp)
+                                        ) {
+
+                                            Column(
+                                                modifier = Modifier.padding(12.dp)
+                                            ) {
+
+                                                Text(
+                                                    text = "Recipient",
+                                                    color = Color.Gray,
+                                                    fontSize = 12.sp
+                                                )
+
+                                                Text(
+                                                    text = selectedCard!!.full_name,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 16.sp
+                                                )
+
+                                            }
+                                        }
 
                                         OutlinedTextField(
                                             value = pin,
                                             onValueChange = {
-                                                pin = it
+                                                if (it.all(Char::isDigit) && it.length <= 6) {
+                                                    pin = it
+                                                }
                                             },
                                             label = {
-                                                Text("Enter Pin")
+                                                Text("PIN")
+                                            },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            keyboardOptions = KeyboardOptions(
+                                                keyboardType = KeyboardType.NumberPassword
+                                            ),
+                                            singleLine = true,
+                                            shape = RoundedCornerShape(8.dp),
+                                            visualTransformation = if (passwordVisible) {
+                                                VisualTransformation.None
+                                            } else {
+                                                PasswordVisualTransformation()
+                                            },
+                                            trailingIcon = {
+                                                IconButton(
+                                                    onClick = { passwordVisible = !passwordVisible }
+                                                ) {
+                                                    Icon(
+                                                        painter = painterResource(
+                                                            id = if (passwordVisible)
+                                                                R.drawable.visibility_off_24px
+                                                            else
+                                                                R.drawable.visibility_24px
+                                                        ),
+                                                        contentDescription = "Toggle PIN visibility",
+                                                        tint = Color.Gray
+                                                    )
+                                                }
                                             }
                                         )
                                     }
@@ -363,23 +503,42 @@ fun CardsScreen(
                                     Button(
                                         onClick = {
                                             // Handle confirmation
-                                            viewModel.sendMoney(selectedCard!!.public_id, amount, pin, remarks)
-                                        }
+                                            viewModel.sendAccess(selectedCard!!.public_id, accessValue, pin, remarks)
+                                        },
+                                        enabled = pin.length >= 4,
+
+                                        shape = RoundedCornerShape(6.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0xFF2E7D32),
+                                            contentColor = Color.White
+                                        )
                                     ) {
 
-                                        Text("Confirm")
+                                        Text(
+                                            text = "Send Access",
+                                            fontWeight = FontWeight.Bold
+                                        )
                                     }
+
                                 },
                                 dismissButton = {
-
                                     OutlinedButton(
                                         onClick = {
                                             viewModel.closeSendConfirmDialog()
-                                        }
+                                        },
+                                        shape = RoundedCornerShape(6.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0xFF990000),
+                                            contentColor = Color.White
+                                        )
                                     ) {
 
-                                        Text("Cancel")
+                                        Text(
+                                            "Cancel",
+                                            fontWeight = FontWeight.Bold
+                                        )
                                     }
+
                                 }
                             )
                         }
@@ -426,8 +585,9 @@ fun CardsScreen(
                             AlertDialog(
                                 onDismissRequest = { /*TODO*/ },
                                 title = {
-                                    Text(text = "Weekly Spending Limit")
+                                    Text(text = "Weekly Usage Limit")
                                 },
+                                shape = RoundedCornerShape(8.dp),
                                 text = {
 
                                     Column(
@@ -437,9 +597,9 @@ fun CardsScreen(
                                         Text(text = selectedCard!!.full_name)
 
                                         OutlinedTextField(
-                                            value = limitAmount,
+                                            value = limitAccessValue,
                                             onValueChange = {
-                                                limitAmount = it
+                                                limitAccessValue = it
                                             },
                                             label = {
                                                 Text("Max spend per week (UGX)")
@@ -453,24 +613,42 @@ fun CardsScreen(
 
                                     Button(
                                         onClick = {
-                                            // Handle confirmation
-                                            viewModel.setCardLimit(selectedCard!!.public_id, limitAmount)
-                                        }
+                                            viewModel.setCardLimit(selectedCard!!.public_id, limitAccessValue)
+                                        },
+                                        enabled = limitAccessValue.isNotBlank(),
+
+                                        shape = RoundedCornerShape(6.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0xFF2E7D32),
+                                            contentColor = Color.White
+                                        )
                                     ) {
 
-                                        Text("Save")
+                                        Text(
+                                            text = "Save",
+                                            fontWeight = FontWeight.Bold
+                                        )
                                     }
+
                                 },
                                 dismissButton = {
-
                                     OutlinedButton(
                                         onClick = {
                                             viewModel.closeSetLimitDialog()
-                                        }
+                                        },
+                                        shape = RoundedCornerShape(6.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0xFF990000),
+                                            contentColor = Color.White
+                                        )
                                     ) {
 
-                                        Text("Cancel")
+                                        Text(
+                                            "Cancel",
+                                            fontWeight = FontWeight.Bold
+                                        )
                                     }
+
                                 }
                             )
                         }
@@ -500,7 +678,6 @@ fun CardsScreen(
                 selectedCard?.let { card ->
                     LinkFamilyMemberDialog(
                         card = card,
-                        phoneNumber = stateLinkCard.phoneNumber,
                         relationship = stateLinkCard.relationship,
 
                         allowTopUp = stateLinkCard.allowTopUp,
@@ -510,11 +687,10 @@ fun CardsScreen(
 
                         relationshipOptions = stateLinkCard.relationshipOptions,
 
-                        onPhoneNumberChange = viewModel::updatePhone,
                         onRelationshipChange = viewModel::updateRelationship,
 
                         onAllowTopUpChange = viewModel::updateAllowTopUp,
-                        onViewBalanceChange = viewModel::updateViewBalance,
+                        onViewAccessValueChange = viewModel::updateViewAvailableAccess,
                         onViewHistoryChange = viewModel::updateViewHistory,
                         onFreezeCardChange = viewModel::updateFreezeCard,
 
@@ -523,7 +699,7 @@ fun CardsScreen(
                         },
                         onConfirm = {
                             viewModel.linkChildCard(
-                                card.phone,
+                                card.public_id,
                                 stateLinkCard.relationship,
                                 stateLinkCard.allowTopUp,
                                 stateLinkCard.viewBalance,
@@ -580,7 +756,7 @@ fun ShowFamilyCards(card: RelationshipItem, viewModel: CardsViewModel) {
                 ) {
 
                     Text(
-                        text = extractInitials(card.full_name),
+                        text = extractInitials(card.full_name ?: ""),
                         color = Color.White,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
@@ -595,7 +771,7 @@ fun ShowFamilyCards(card: RelationshipItem, viewModel: CardsViewModel) {
                 ) {
 
                     Text(
-                        text = card.full_name,
+                        text = card.full_name ?: "",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF14213D)
@@ -604,7 +780,7 @@ fun ShowFamilyCards(card: RelationshipItem, viewModel: CardsViewModel) {
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = card.phone,
+                        text = card.phone ?: "Contact not set",
                         fontSize = 16.sp,
                         color = Color(0xFF5A6C8F)
                     )
@@ -622,7 +798,7 @@ fun ShowFamilyCards(card: RelationshipItem, viewModel: CardsViewModel) {
                     },
                     modifier = Modifier
                         .background(
-                            color = Color(0xFFE9A001),
+                            color = Color(0xFFCE8D00),
                             shape = CircleShape
                         )
                 ) {
@@ -678,7 +854,7 @@ fun PendingChildCard(card: RelationshipItem, viewModel: CardsViewModel) {
                 ) {
 
                     Text(
-                        text = extractInitials(card.full_name),
+                        text = extractInitials(card.full_name ?: ""),
                         color = Color.White,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
@@ -693,7 +869,7 @@ fun PendingChildCard(card: RelationshipItem, viewModel: CardsViewModel) {
                 ) {
 
                     Text(
-                        text = card.full_name,
+                        text = card.full_name ?: "",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF14213D)
@@ -702,7 +878,7 @@ fun PendingChildCard(card: RelationshipItem, viewModel: CardsViewModel) {
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = card.phone,
+                        text = card.phone ?: "Contact not set",
                         fontSize = 16.sp,
                         color = Color(0xFF5A6C8F)
                     )
@@ -712,7 +888,7 @@ fun PendingChildCard(card: RelationshipItem, viewModel: CardsViewModel) {
                     Text(
                         text = "Waiting for Acceptance",
                         fontSize = 16.sp,
-                        color = Color(0xFFA57100)
+                        color = Color(0xFFCE8D00)
                     )
                 }
 
@@ -736,7 +912,7 @@ fun PendingChildCard(card: RelationshipItem, viewModel: CardsViewModel) {
 }
 
 @Composable
-fun ChildCard(card: RelationshipItem, viewModel: CardsViewModel, navController: NavController, showChildBalance: Boolean, childCardBalanceUiState: ChildCardBalanceUiState) {
+fun ChildCard(card: RelationshipItem, viewModel: CardsViewModel, navController: NavController, showChildAvailableAccess: Boolean, childCardAvailableAccessUiState: ChildCardAvailableAccessUiState) {
 
     Card(
         modifier = Modifier
@@ -773,7 +949,7 @@ fun ChildCard(card: RelationshipItem, viewModel: CardsViewModel, navController: 
                 ) {
 
                     Text(
-                        text = extractInitials(card.full_name),
+                        text = extractInitials(card.full_name ?: ""),
                         color = Color.White,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
@@ -788,7 +964,7 @@ fun ChildCard(card: RelationshipItem, viewModel: CardsViewModel, navController: 
                 ) {
 
                     Text(
-                        text = card.full_name,
+                        text = card.full_name ?: "",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF14213D)
@@ -797,7 +973,7 @@ fun ChildCard(card: RelationshipItem, viewModel: CardsViewModel, navController: 
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = card.phone,
+                        text = card.phone ?: "Contact not set",
                         fontSize = 16.sp,
                         color = Color(0xFF5A6C8F)
                     )
@@ -805,7 +981,7 @@ fun ChildCard(card: RelationshipItem, viewModel: CardsViewModel, navController: 
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = "${card.i_manage_them.relationship_type} · ${card.account_type}",
+                        text = "${card.i_manage_them.relationship_type ?: ""} · ${card.account_type ?: ""}",
                         fontSize = 14.sp,
                         color = Color(0xFF8D99AE)
                     )
@@ -816,7 +992,7 @@ fun ChildCard(card: RelationshipItem, viewModel: CardsViewModel, navController: 
                     )
 
                     Text(
-                        text = "Weekly Limit: ${card.i_manage_them.weekly_spend_limit}",
+                        text = "Weekly Limit: ${card.i_manage_them.weekly_spend_limit ?: ""}",
                         fontSize = 14.sp,
                         color = Color(0xFF8D99AE),
                         modifier = Modifier.padding(top = 5.dp)
@@ -845,7 +1021,7 @@ fun ChildCard(card: RelationshipItem, viewModel: CardsViewModel, navController: 
             )
 
             // AMOUNT
-            if(showChildBalance && card.public_id == childCardBalanceUiState.child_public_id){
+            if(showChildAvailableAccess && card.public_id == childCardAvailableAccessUiState.child_public_id){
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -863,7 +1039,7 @@ fun ChildCard(card: RelationshipItem, viewModel: CardsViewModel, navController: 
                         color = Color(0xFF8D99AE)
                     )
                     Text(
-                        text = "UGX ${childCardBalanceUiState.balance}",
+                        text = "UGX ${childCardAvailableAccessUiState.accessValue ?: 0}",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
@@ -899,7 +1075,7 @@ fun ChildCard(card: RelationshipItem, viewModel: CardsViewModel, navController: 
 
                 VerticalDivider()
                 if(!card.card_frozen){
-                    if(showChildBalance && card.public_id == childCardBalanceUiState.child_public_id){
+                    if(showChildAvailableAccess && card.public_id == childCardAvailableAccessUiState.child_public_id){
                         ActionItem(
                             modifier = Modifier.weight(1f),
                             icon = Icons.Default.CheckCircle,
@@ -914,12 +1090,12 @@ fun ChildCard(card: RelationshipItem, viewModel: CardsViewModel, navController: 
                         ActionItem(
                             modifier = Modifier.weight(1f),
                             icon = Icons.Default.CheckCircle,
-                            text = "Balance",
+                            text = "Show",
                             color = Color(0xFF0057FF),
                             onClick = {
                                 // show and hide balance
                                 viewModel.showChildCardBalance(card)
-                                viewModel.getChildCardBalance(card.public_id)
+                                viewModel.getChildCardAvailableAccess(card.public_id)
                             }
                         )
                     }
@@ -947,7 +1123,7 @@ fun ChildCard(card: RelationshipItem, viewModel: CardsViewModel, navController: 
                             modifier = Modifier.weight(1f),
                             icon = Icons.Default.Lock,
                             text = "UnFreeze",
-                            color = Color(0xFFA57100),
+                            color = Color(0xFFCE8D00),
                             onClick = {
                                 // unfreeze card
                                 viewModel.unFreezeCard(card.public_id)
@@ -993,7 +1169,7 @@ fun ChildCard(card: RelationshipItem, viewModel: CardsViewModel, navController: 
                     Icon(
                         imageVector = Icons.Default.CheckCircle,
                         contentDescription = null,
-                        tint = Color(0xFF94A3B8),
+                        tint = Color(0xFFCE8D00),
                         modifier = Modifier.size(18.dp)
                     )
 
@@ -1001,7 +1177,7 @@ fun ChildCard(card: RelationshipItem, viewModel: CardsViewModel, navController: 
 
                     Text(
                         text = "Set weekly limit",
-                        color = Color(0xFF8D99AE),
+                        color = Color(0xFFCE8D00),
                         fontSize = 16.sp,
                         modifier = Modifier.weight(1f)
                     )
@@ -1223,7 +1399,6 @@ fun LinkFamilyMemberDialog(
 
     card: RelationshipItem,
 
-    phoneNumber: String,
     relationship: String,
 
     allowTopUp: Boolean,
@@ -1233,11 +1408,10 @@ fun LinkFamilyMemberDialog(
 
     relationshipOptions: List<String>,
 
-    onPhoneNumberChange: (String) -> Unit,
     onRelationshipChange: (String) -> Unit,
 
     onAllowTopUpChange: (Boolean) -> Unit,
-    onViewBalanceChange: (Boolean) -> Unit,
+    onViewAccessValueChange: (Boolean) -> Unit,
     onViewHistoryChange: (Boolean) -> Unit,
     onFreezeCardChange: (Boolean) -> Unit,
 
@@ -1254,7 +1428,7 @@ fun LinkFamilyMemberDialog(
 
         title = {
             Text(
-                text = "Send Manage Request to ${card.full_name}",
+                text = "Send Manage Request to ${card.full_name ?: ""}",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF1F2937)
@@ -1273,7 +1447,7 @@ fun LinkFamilyMemberDialog(
 
                 // PHONE NUMBER
                 Text(
-                    card.phone,
+                    card.phone ?: "",
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp,
                     color = Color(0xFF374151)
@@ -1318,7 +1492,7 @@ fun LinkFamilyMemberDialog(
                 PermissionItem(
                     text = "View Balance",
                     checked = viewBalance,
-                    onCheckedChange = onViewBalanceChange
+                    onCheckedChange = onViewAccessValueChange
                 )
 
                 PermissionItem(

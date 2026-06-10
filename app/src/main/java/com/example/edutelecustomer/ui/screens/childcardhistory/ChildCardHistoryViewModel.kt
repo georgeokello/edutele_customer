@@ -41,7 +41,7 @@ class ChildCardHistoryViewModel(
                 initialValue = null
             )
 
-    fun fetchChildCardTransactions(child_public_id: String) {
+    fun fetchChildCardHistory(child_public_id: String) {
 
         viewModelScope.launch {
 

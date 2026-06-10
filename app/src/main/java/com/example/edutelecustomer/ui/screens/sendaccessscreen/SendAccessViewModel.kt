@@ -1,13 +1,10 @@
-package com.example.edutelecustomer.ui.screens.sendmoneyscreen
+package com.example.edutelecustomer.ui.screens.sendaccessscreen
 
 import android.util.Log
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.edutelecustomer.data.local.UserPreferences
-import com.example.edutelecustomer.data.model.sendmoney.PhoneLookUpResponse
-import com.example.edutelecustomer.data.repository.SendMoneyRepository
+import com.example.edutelecustomer.data.repository.SendAccessRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +13,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
-data class SendMoneyUiState(
+data class SendAccessUiState(
     val isLoading : Boolean = false,
     val publicId: String = "",
     val fullName: String = "",
@@ -24,18 +21,18 @@ data class SendMoneyUiState(
     val error: String? = null
 )
 
-class SendMoneyViewModel (
+class SendAccessViewModel (
     private val userPreferences: UserPreferences,
-    private val repository: SendMoneyRepository
+    private val repository: SendAccessRepository
 ) : ViewModel(){
 
-    var amountDialog = MutableStateFlow(false)
+    var accessValueDialog = MutableStateFlow(false)
         private set
 
     var successDialog = MutableStateFlow(false)
         private set
 
-    var uiState = MutableStateFlow(SendMoneyUiState())
+    var uiState = MutableStateFlow(SendAccessUiState())
         private set
 
     val username: StateFlow<String?> =
@@ -48,21 +45,17 @@ class SendMoneyViewModel (
 
     fun lookUpNumber(phone: String){
         viewModelScope.launch {
-            Log.e("SEND_ERROR", "Inside viewModel Scope now")
             try{
                 uiState.value = uiState.value.copy(
                     isLoading = true,
                     error = null
                 )
-                Log.e("SEND_ERROR", "Inside viewModel try block now")
                 val tokenValue =
                     userPreferences.tokenFlow.first()
                 if(!tokenValue.isNullOrEmpty()){
-                    Log.e("SEND_ERROR", "check token successful")
                     val response = repository.lookUpPhoneNumber(tokenValue, phone)
                     if(response.isSuccessful){
-                        Log.e("SEND_ERROR", "response successful")
-                        openAmountDialog()
+                        openAccessValueDialog()
                         uiState.value = response.body()?.let {
                             uiState.value.copy(
                                 publicId = it.public_id,
@@ -87,7 +80,6 @@ class SendMoneyViewModel (
 
                         )
 
-                        Log.e("SEND_ERROR", "response failed")
                     }
                 }else{
                     uiState.value = uiState.value.copy(
@@ -95,19 +87,17 @@ class SendMoneyViewModel (
                         isLoading = false
 
                     )
-                    Log.e("SEND_ERROR", "No token found")
                 }
             }catch (e:Exception){
                 uiState.value = uiState.value.copy(
                     isLoading = false,
                     error = "Try again Later"
                 )
-                Log.e("SEND_ERROR", "Inside catch $e")
             }
         }
     }
 
-    fun sendMoney(publicId: String, amount: String, remarks:String, pin:String){
+    fun sendAccess(publicId: String, accessValue: String, remarks:String, pin:String){
         viewModelScope.launch {
             try{
                 uiState.value = uiState.value.copy(
@@ -117,7 +107,7 @@ class SendMoneyViewModel (
                 val tokenValue =
                     userPreferences.tokenFlow.first()
                 if(!tokenValue.isNullOrEmpty()){
-                    val response = repository.sendMoney(tokenValue, publicId, amount,remarks, pin)
+                    val response = repository.sendAccess(tokenValue, publicId, accessValue,remarks, pin)
                     if(response.isSuccessful){
 
                         uiState.value = response.body()?.let {
@@ -126,7 +116,7 @@ class SendMoneyViewModel (
                             )
                         }!!
 
-                        closeAmountDialog()
+                        closeAccessValueDialog()
                         openSuccessDialog()
                     }else{
                         val errorBody = response.errorBody()?.string()
@@ -144,7 +134,7 @@ class SendMoneyViewModel (
                             isLoading = false
 
                         )
-                        closeAmountDialog()
+                        closeAccessValueDialog()
 
                     }
                 }else{
@@ -153,7 +143,6 @@ class SendMoneyViewModel (
                         isLoading = false
 
                     )
-                    Log.e("SEND_ERROR", "No token found")
                 }
             }catch (e:Exception){
                 uiState.value = uiState.value.copy(
@@ -164,12 +153,12 @@ class SendMoneyViewModel (
         }
     }
 
-    fun openAmountDialog(){
-        amountDialog.value = true
+    fun openAccessValueDialog(){
+        accessValueDialog.value = true
     }
 
-    fun closeAmountDialog(){
-        amountDialog.value = false
+    fun closeAccessValueDialog(){
+        accessValueDialog.value = false
     }
 
     fun openSuccessDialog(){

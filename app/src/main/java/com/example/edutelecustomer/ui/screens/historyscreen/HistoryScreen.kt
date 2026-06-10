@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.edutelecustomer.data.local.UserPreferences
-import com.example.edutelecustomer.data.model.transactions.TransactionItem
+import com.example.edutelecustomer.data.model.redemptions.RedemptionItem
 import com.example.edutelecustomer.ui.components.AppTemplate
 import com.example.edutelecustomer.ui.components.AppTemplateViewModel
 import com.example.edutelecustomer.ui.components.AppTemplateViewModelFactory
@@ -53,22 +53,23 @@ fun HistoryScreen(navController: NavController) {
     val state by viewModel.uiState.collectAsState()
 
     LaunchedEffect(Unit) {
-        viewModel.fetchTransactions()
+        viewModel.fetchRedemptions()
     }
 
     AppTemplate(
         userName = user.toString(),
-        balance = " ${cardInfo.card?.balance ?: 0}",
+        balance = " ${cardInfo.card?.remaining ?: 0}",
         navItems = navItems,
         selectedNavIndex = navItems.indexOfFirst { it.route == currentRoute },
         onNavSelected = { index ->
             val route = navItems[index].route
             if (route != currentRoute) navigateTo(navController, route)
-        }
+        },
+        navController = navController
     ) {
         Column {
             Spacer(modifier = Modifier.height(50.dp))
-            Text(text = "Transaction History")
+            Text(text = "Redemption History")
             Spacer(modifier = Modifier.height(5.dp))
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
 
@@ -79,7 +80,11 @@ fun HistoryScreen(navController: NavController) {
 
                     when {
                         state.isLoading -> {
-                            CircularProgressIndicator()
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp,
+                                color = Color.White
+                            )
                         }
 
                         state.error != null -> {
@@ -103,8 +108,8 @@ fun HistoryScreen(navController: NavController) {
                             LazyColumn(
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                items(state.transactions) { transaction ->
-                                    TransactionCard(transaction, viewModel)
+                                items(state.redemption) { redemption ->
+                                    RedemptionCard(redemption, viewModel)
                                 }
                             }
                         }
@@ -119,33 +124,33 @@ fun HistoryScreen(navController: NavController) {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun TransactionCard(
-    transaction: TransactionItem,
+fun RedemptionCard(
+    redemption: RedemptionItem,
     viewModel: HistoryViewModel
 ) {
 
-    val statusText = when (transaction.status.lowercase()) {
+    val statusText = when (redemption.status.lowercase()) {
         "posted" -> "Completed"
         "pending" -> "Pending"
         "failed" -> "Failed"
-        else -> transaction.status
+        else -> redemption.status
     }
 
-    val statusColor = when (transaction.status.lowercase()) {
+    val statusColor = when (redemption.status.lowercase()) {
         "posted" -> Color(0xFF2E7D32)
         "pending" -> Color(0xFFF9A825)
         "failed" -> Color(0xFFC62828)
         else -> Color.Gray
     }
 
-    val statusBackground = when (transaction.status.lowercase()) {
+    val statusBackground = when (redemption.status.lowercase()) {
         "posted" -> Color(0xFFE8F5E9)
         "pending" -> Color(0xFFFFF8E1)
         "failed" -> Color(0xFFFFEBEE)
         else -> Color(0xFFF5F5F5)
     }
 
-    val amountColor = if (transaction.amount.trim().startsWith("-")) {
+    val amountColor = if (redemption.amount.trim().startsWith("-")) {
         Color(0xFF990000) // red
     } else {
         Color(0xFF16A34A) // green (or your default)
@@ -172,7 +177,7 @@ fun TransactionCard(
                 Column {
 
                     Text(
-                        text = transaction.type.uppercase(),
+                        text = redemption.type.uppercase(),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
@@ -181,7 +186,7 @@ fun TransactionCard(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = viewModel.formatTimestamp(transaction.timestamp),
+                        text = viewModel.formatTimestamp(redemption.timestamp),
                         fontSize = 12.sp,
                         color = Color.Gray
                     )
@@ -209,7 +214,7 @@ fun TransactionCard(
 
             // AMOUNT
             Text(
-                text = "UGX ${transaction.amount}",
+                text = "UGX ${redemption.amount}",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = amountColor
@@ -234,7 +239,7 @@ fun TransactionCard(
                 )
 
                 Text(
-                    text = "UGX ${transaction.balance_after}",
+                    text = "UGX ${redemption.remaining_after}",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color.Black

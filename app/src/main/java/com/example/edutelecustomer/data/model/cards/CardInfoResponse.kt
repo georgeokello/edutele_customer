@@ -3,9 +3,9 @@ package com.example.edutelecustomer.data.model.cards
 data class CardInfoResponse(
     val card: CardInfo,
     val quick_stats: QuickStats,
-    val recent_transactions: List<RecentTransaction>,
-    val spending_breakdown: List<SpendingBreakdown>,
-    val has_more_transactions: Boolean,
+    val recent_access_events: List<RecentRedemptions>,
+    val spending_breakdown: List<UsageBreakdown>,
+    val has_more_access_events: Boolean,
     val rewards: Rewards
 )
 
@@ -13,11 +13,11 @@ data class CardInfoResponse(
 data class CardInfo(
     val card_uid: String,
     val card_number: String,
-    val balance: String,
+    val remaining: String,
     val status: String,
     val issued_at: String,
     val expiry: String,
-    val total_topups: String,
+    val total_allocated: String,
     val total_spent: String,
     val total_refunds: String
 )
@@ -25,7 +25,7 @@ data class CardInfo(
 
 data class QuickStats(
     val total_spent: StatItem,
-    val transactions: StatItem,
+    val access_events: StatItem,
     val pending: StatItem,
     val success_rate: StatItem
 )
@@ -35,7 +35,7 @@ data class StatItem(
     val change_pct: Double
 )
 
-data class RecentTransaction(
+data class RecentRedemptions(
     val activity: String,
     val place: String,
     val date: String,
@@ -44,7 +44,7 @@ data class RecentTransaction(
     val type: String
 )
 
-data class SpendingBreakdown(
+data class UsageBreakdown(
     val label: String,
     val amount: String,
     val percent: Int,
@@ -52,7 +52,7 @@ data class SpendingBreakdown(
 )
 
 data class Rewards(
-    val points_balance: Int,
+    val points_remaining: Int,
     val badge: Badge,
     val next_badge: NextBadge
 )

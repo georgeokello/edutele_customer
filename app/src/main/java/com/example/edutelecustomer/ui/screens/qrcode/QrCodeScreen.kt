@@ -73,13 +73,18 @@ fun QrCodeScreen(
         onNavSelected = { index ->
             val route = navItems[index].route
             if (route != currentRoute) navigateTo(navController, route)
-        }
+        },
+        navController = navController
     ) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
 
             when {
                 state.isLoading -> {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = Color.White
+                    )
                 }
 
                 state.error != null -> {
