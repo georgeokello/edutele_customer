@@ -53,9 +53,9 @@ import com.example.edutelecustomer.ui.util.getGreeting
 @Composable
 fun AppTemplate(
     userName: String = "Daniel",
-    balanceTitle: String = "Balance",
-    balance: String = "UGX 250,000",
-    balanceBelowText: String = "Wallet Balance",
+    accessTitle: String = "Access",
+    availableAccess: String = "UGX 250,000",
+    accessBelowText: String = "Available Access",
     navItems: List<BottomNavItem>,
     selectedNavIndex: Int,
     onNavSelected: (Int) -> Unit,
@@ -97,10 +97,10 @@ fun AppTemplate(
             }
 
             // Floating Balance Card
-            BalanceCard(
-                balanceTitle= balanceTitle,
-                balance = balance,
-                balanceBelowText = balanceBelowText,
+            AccessCard(
+                accessTitle= accessTitle,
+                availableAccess = availableAccess,
+                accessBelowText = accessBelowText,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .offset(y = 180.dp)
@@ -184,7 +184,7 @@ fun HeaderSection(userName: String, navController: NavController) {
                     1.dp,
                     Color(0xFF990000)
                 ),
-                shape = RoundedCornerShape(10.dp),
+                shape = RoundedCornerShape(8.dp),
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ExitToApp,
@@ -204,10 +204,10 @@ fun HeaderSection(userName: String, navController: NavController) {
 }
 
 @Composable
-fun BalanceCard(
-    balanceTitle: String,
-    balance: String,
-    balanceBelowText: String,
+fun AccessCard(
+    accessTitle: String,
+    availableAccess: String,
+    accessBelowText: String,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -228,14 +228,14 @@ fun BalanceCard(
 
         ) {
             Text(
-                text = balanceTitle,
+                text = accessTitle,
                 color = Color.White,
                 fontSize = 16.sp,
                 modifier = Modifier.padding(6.dp)
             )
 
             Text(
-                text = balance,
+                text = availableAccess,
                 color = Color.White,
                 fontSize = 30.sp,
                 fontWeight = FontWeight.Bold,
@@ -243,7 +243,7 @@ fun BalanceCard(
             )
 
             Text(
-                text = balanceBelowText,
+                text = accessBelowText,
                 color = Color.White,
                 fontSize = 14.sp,
                 modifier = Modifier.padding(6.dp)

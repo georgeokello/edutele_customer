@@ -101,7 +101,7 @@ fun SendMoneyScreen(navController: NavController) {
 
     AppTemplate(
         userName = user.toString(),
-        balance = " ${cardInfo.card?.remaining ?: 0}",
+        availableAccess = " ${cardInfo.card?.remaining ?: 0}",
         navItems = navItems,
         selectedNavIndex = navItems.indexOfFirst { it.route == currentRoute },
         onNavSelected = { index ->
@@ -153,8 +153,8 @@ fun SendMoneyScreen(navController: NavController) {
                                     phoneNumber = it
                                 }
                             },
-                            label = { Text("Phone Number") },
-                            placeholder = { Text("07XXXXXXXX") },
+                            label = { Text("Phone or CardNo") },
+                            placeholder = { Text("07XXXXXXXX or EDU-XXX") },
                             leadingIcon = {
                                 Icon(
                                     imageVector = Icons.Default.Phone,
@@ -176,6 +176,7 @@ fun SendMoneyScreen(navController: NavController) {
                         Button(
                             onClick = {
                                 viewModel.lookUpNumber(phoneNumber)
+                                phoneNumber = ""
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -347,7 +348,9 @@ fun SendMoneyScreen(navController: NavController) {
                                             },
                                             trailingIcon = {
                                                 IconButton(
-                                                    onClick = { passwordVisible = !passwordVisible }
+                                                    onClick = {
+                                                        passwordVisible = !passwordVisible }
+
                                                 ) {
                                                     Icon(
                                                         painter = painterResource(
@@ -372,6 +375,11 @@ fun SendMoneyScreen(navController: NavController) {
 
                                             // send money
                                             viewModel.sendAccess(viewModel.uiState.value.publicId, accessValue, remarks, pin)
+
+                                            // clear fields
+                                            accessValue = ""
+                                            remarks = ""
+                                            pin = ""
                                         },
                                         enabled =
                                         accessValue.isNotBlank() &&

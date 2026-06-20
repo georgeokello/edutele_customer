@@ -46,6 +46,21 @@ class AppTemplateViewModel(
     var logoutState = MutableStateFlow(false)
         private set
 
+    var convertPointsDialog = MutableStateFlow(false)
+        private set
+
+    var setSuccessDialog = MutableStateFlow(false)
+        private set
+
+    var setFailureDialog = MutableStateFlow(false)
+        private set
+
+    var dialogMessage = MutableStateFlow("")
+        private set
+
+    var isLoading = MutableStateFlow(false)
+        private set
+
 
     init {
         getCardInfo()
@@ -134,5 +149,64 @@ class AppTemplateViewModel(
                 logoutState.value = false
             }
         }
+    }
+
+    fun convertPoints(points: String){
+        viewModelScope.launch {
+            isLoading.value = true
+
+            try {
+                val tokenValue = userPreferences.tokenFlow.first()
+                if(!tokenValue.isNullOrEmpty()){
+
+                    val response = repository.convertPoints(tokenValue, points)
+                    if(response.isSuccessful){
+                        isLoading.value = false
+                        setSuccessDialog.value = true
+                        dialogMessage.value = "${response.body()?.points_redeemed} Converted to ${response.body()?.ugx_added_to_credit} UGX"
+                        getCardInfo()
+                    } else {
+                        val errorBody = response.errorBody()?.string()
+
+                        val errorDetail = errorBody?.let {
+                            try {
+                                JSONObject(it).getString("detail")
+                            } catch (e: Exception) {
+                                "Unknown error, Try again Later"
+                            }
+                        }
+
+                        setFailureDialog.value = true
+                        dialogMessage.value = errorDetail.toString()
+
+                    }
+                }
+
+            }catch (e:Exception){
+                setFailureDialog.value = true
+                dialogMessage.value = "Failed to Convert points - Try again Later"
+            }
+        }
+    }
+
+    fun openConvertPointsDialog(){
+        convertPointsDialog.value = true
+    }
+    fun closeConvertPointsDialog(){
+        convertPointsDialog.value = false
+    }
+
+    fun openSuccessDialog(){
+        setSuccessDialog.value = true
+    }
+    fun closeSuccessDialog(){
+        setSuccessDialog.value = false
+    }
+
+    fun openFailureDialog(){
+        setFailureDialog.value = true
+    }
+    fun closeFailureDialog(){
+        setFailureDialog.value = false
     }
 }

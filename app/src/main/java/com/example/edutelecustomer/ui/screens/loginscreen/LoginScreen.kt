@@ -109,7 +109,7 @@ fun LoginScreen(
                     value = state.email,
                     onValueChange = viewModel::onEmailChange,
                     label = { Text(
-                        "Email",
+                        "Email, Phone or Code",
                         color = Color.Gray
                     ) },
                     singleLine = true,
@@ -193,7 +193,7 @@ fun LoginScreen(
                         onClick = {
                             // navigate to forgot password screen
 
-                            val url = "https://edutele-pay-frontend.pages.dev/forgot-password"
+                            val url = "https://edutele-pay-frontend.pages.dev/forgot-password/card-holder"
                             val intent = Intent(Intent.ACTION_VIEW).apply {
                                 data = android.net.Uri.parse(url)
                             }
@@ -222,3 +222,4 @@ fun LoginScreen(
         }
     }
 }
+

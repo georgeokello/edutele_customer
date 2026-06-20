@@ -65,9 +65,9 @@ fun QrCodeScreen(
 
     AppTemplate(
         userName=user.toString(),
-        balanceTitle = "",
-        balance = "Scan the QR Code",
-        balanceBelowText = "",
+        accessTitle = "",
+        availableAccess = "Scan the QR Code",
+        accessBelowText = "",
         navItems = navItems,
         selectedNavIndex = navItems.indexOfFirst { it.route == currentRoute },
         onNavSelected = { index ->

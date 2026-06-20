@@ -1,6 +1,8 @@
 package com.example.edutelecustomer.data.repository
 
 
+import com.example.edutelecustomer.data.model.apptemplate.ConvertPointsRequest
+import com.example.edutelecustomer.data.model.apptemplate.ConvertPointsResponse
 import com.example.edutelecustomer.data.model.apptemplate.LogoutResponse
 import com.example.edutelecustomer.data.model.cards.CardInfoResponse
 import com.example.edutelecustomer.data.remote.ApiService
@@ -18,6 +20,13 @@ class AppTemplateRepository(
     suspend fun logout(token: String): Response<LogoutResponse> {
         return  api.logout(
             "Bearer $token"
+        )
+    }
+
+    suspend fun convertPoints(token: String, points: String): Response<ConvertPointsResponse> {
+        return api.convertPoints(
+            "Bearer $token",
+            ConvertPointsRequest(points.toInt())
         )
     }
 }

@@ -1,5 +1,7 @@
 package com.example.edutelecustomer.data.remote
 
+import com.example.edutelecustomer.data.model.apptemplate.ConvertPointsRequest
+import com.example.edutelecustomer.data.model.apptemplate.ConvertPointsResponse
 import com.example.edutelecustomer.data.model.apptemplate.LogoutResponse
 import com.example.edutelecustomer.data.model.cards.AcceptChildCardResponse
 import com.example.edutelecustomer.data.model.cards.CardInfoResponse
@@ -195,5 +197,11 @@ interface ApiService {
         @Header("Authorization") token : String,
         @Path("requester_public_id") requesterPublicId : String,
     ): Response<declineChildCardResponse>
+
+    @POST("/api/rewards/redeem")
+    suspend fun convertPoints(
+        @Header("Authorization") token : String,
+        @Body request: ConvertPointsRequest
+    ): Response<ConvertPointsResponse>
 
 }

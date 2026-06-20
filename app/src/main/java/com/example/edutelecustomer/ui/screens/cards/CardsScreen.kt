@@ -78,6 +78,8 @@ import com.example.edutelecustomer.ui.components.AppTemplate
 import com.example.edutelecustomer.ui.components.AppTemplateViewModel
 import com.example.edutelecustomer.ui.components.AppTemplateViewModelFactory
 import com.example.edutelecustomer.ui.navigation.navItems
+import com.example.edutelecustomer.ui.util.DismissFailureDialog
+import com.example.edutelecustomer.ui.util.DismissSuccessDialog
 import com.example.edutelecustomer.ui.util.extractInitials
 import com.example.edutelecustomer.ui.util.navigateTo
 
@@ -146,7 +148,7 @@ fun CardsScreen(
 
     AppTemplate(
         userName = user.toString(),
-        balance = " ${cardInfo.card?.remaining ?: 0}",
+        availableAccess = " ${cardInfo.card?.remaining ?: 0}",
         navItems = navItems,
         selectedNavIndex = navItems.indexOfFirst { it.route == currentRoute },
         onNavSelected = { index ->
@@ -375,6 +377,9 @@ fun CardsScreen(
                                             viewModel.closeSendDialog()
                                             // Handle confirmation
                                             viewModel.openSendConfirmDialog(selectedCard!!)
+                                            // clear fields
+                                            accessValue = ""
+                                            remarks = ""
 
                                         },
                                         enabled =
@@ -504,6 +509,8 @@ fun CardsScreen(
                                         onClick = {
                                             // Handle confirmation
                                             viewModel.sendAccess(selectedCard!!.public_id, accessValue, pin, remarks)
+                                            //clear fields
+                                            pin = ""
                                         },
                                         enabled = pin.length >= 4,
 
@@ -614,6 +621,8 @@ fun CardsScreen(
                                     Button(
                                         onClick = {
                                             viewModel.setCardLimit(selectedCard!!.public_id, limitAccessValue)
+                                            // clears fields
+                                            limitAccessValue = ""
                                         },
                                         enabled = limitAccessValue.isNotBlank(),
 
@@ -657,7 +666,7 @@ fun CardsScreen(
                 }
             }
 
-            AutoDismissSuccessDialog(
+            DismissSuccessDialog(
                 showDialog = successDialog,
                 message = dialogMessage,
                 onDismiss = {
@@ -665,7 +674,7 @@ fun CardsScreen(
                 }
             )
 
-            AutoDismissFailureDialog(
+            DismissFailureDialog(
                 showDialog = failureDialog,
                 message = dialogMessage,
                 onDismiss = {
@@ -1244,153 +1253,6 @@ fun VerticalDivider() {
             .background(Color(0xFFF0F0F0))
     )
 }
-
-
-@Composable
-fun AutoDismissSuccessDialog(
-    showDialog: Boolean,
-    message: String,
-    onDismiss: () -> Unit,
-    title: String = "Success",
-) {
-
-    if (showDialog) {
-
-        AlertDialog(
-
-            onDismissRequest = {
-                onDismiss()
-            },
-
-            icon = {
-
-                Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = null,
-                    tint = Color(0xFF2E7D32),
-                    modifier = Modifier.size(52.dp)
-                )
-            },
-
-            title = {
-
-                Text(
-                    text = title,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp
-                )
-            },
-
-            text = {
-
-                Text(
-                    text = message,
-                    fontSize = 15.sp,
-                    lineHeight = 22.sp
-                )
-            },
-
-            confirmButton = {
-                Button(
-                    onClick = {
-                        // dismiss dialog
-                        onDismiss()
-                    },
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF2E7D32),
-                        contentColor = Color.White
-                    )
-                ) {
-
-                    Text(
-                        text = "Done",
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            },
-
-            shape = RoundedCornerShape(8.dp),
-
-            containerColor = Color.White
-        )
-    }
-}
-
-@Composable
-fun AutoDismissFailureDialog(
-    showDialog: Boolean,
-    message: String,
-    onDismiss: () -> Unit,
-    title: String = "Failed"
-) {
-
-
-    if (showDialog) {
-
-        AlertDialog(
-
-            onDismissRequest = {
-                onDismiss()
-            },
-
-            icon = {
-
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = null,
-                    tint = Color(0xFF990000),
-                    modifier = Modifier.size(52.dp)
-                )
-            },
-
-            title = {
-
-                Text(
-                    text = title,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp
-                )
-            },
-
-            text = {
-
-                Text(
-                    text = message,
-                    fontSize = 15.sp,
-                    lineHeight = 22.sp
-                )
-            },
-
-            confirmButton = {
-                Button(
-                    onClick = {
-                        // dismiss dialog
-                        onDismiss()
-                    },
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF990000),
-                        contentColor = Color.White
-                    )
-                ) {
-
-                    Text(
-                        text = "Close",
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            },
-
-            shape = RoundedCornerShape(8.dp),
-
-            containerColor = Color.White
-        )
-    }
-}
-
 
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -53,6 +53,9 @@ data class UsageBreakdown(
 
 data class Rewards(
     val points_remaining: Int,
+    val points_per_ugx: Int,
+    val points_worth_ugx: String,
+    val redemption_credit: String,
     val badge: Badge,
     val next_badge: NextBadge
 )

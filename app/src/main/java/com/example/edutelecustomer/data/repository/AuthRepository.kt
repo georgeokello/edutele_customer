@@ -4,6 +4,7 @@ import android.util.Log
 import com.example.edutelecustomer.data.local.UserPreferences
 import com.example.edutelecustomer.data.model.login.LoginRequest
 import com.example.edutelecustomer.data.remote.ApiService
+import org.json.JSONObject
 
 
 class AuthRepository(
@@ -28,7 +29,7 @@ class AuthRepository(
                     userPreferences.saveUser(
                         token = user_token,
                         customerId = customer_id,
-                        full_name = response2.body()!!.full_name,
+                        full_name = response2.body()!!.last_name,
                     )
                     Result.success(Unit)
 
@@ -37,11 +38,20 @@ class AuthRepository(
                 }
 
             } else {
-                Result.failure(Exception("Login request failed"))
+                val errorBody = response.errorBody()?.string()
+
+                val errorDetail = errorBody?.let {
+                    try {
+                        JSONObject(it).getString("detail")
+                    } catch (e: Exception) {
+                        "Unknown error, Try again Later"
+                    }
+                }
+                Result.failure(Exception(errorDetail))
             }
 
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception("Internet connection issue. Please check your network and try again."))
         }
     }
 

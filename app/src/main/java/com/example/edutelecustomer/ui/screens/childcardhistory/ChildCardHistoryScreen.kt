@@ -78,7 +78,7 @@ fun ChildCardHistoryScreen(navController: NavController, path: String) {
 
     AppTemplate(
         userName = user.toString(),
-        balance = " ${cardInfo.card?.remaining ?: 0}",
+        availableAccess = " ${cardInfo.card?.remaining ?: 0}",
         navItems = navItems,
         selectedNavIndex = navItems.indexOfFirst { it.route == currentRoute },
         onNavSelected = { index ->

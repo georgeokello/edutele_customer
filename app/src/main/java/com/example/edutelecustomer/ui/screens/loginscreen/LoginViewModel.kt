@@ -46,13 +46,15 @@ class LoginViewModel(
             result.onSuccess {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    isSuccess = true
+                    isSuccess = true,
+                    email = "",
+                    password = ""
                 )
             }.onFailure { e ->
-                Log.e("LOGIN_ERROR", "Error: $e")
+                Log.e("LOGIN_ERROR", "Error: ${e.message}")
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = "Login failed try again!!"
+                    error = e.message
                 )
             }
         }
