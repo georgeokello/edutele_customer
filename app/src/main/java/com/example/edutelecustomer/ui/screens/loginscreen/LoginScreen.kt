@@ -193,7 +193,7 @@ fun LoginScreen(
                         onClick = {
                             // navigate to forgot password screen
 
-                            val url = "https://edutele-pay-frontend.pages.dev/forgot-password/card-holder"
+                            val url = "https://eduteleaccess.com/forgot-password/card-holder"
                             val intent = Intent(Intent.ACTION_VIEW).apply {
                                 data = android.net.Uri.parse(url)
                             }
