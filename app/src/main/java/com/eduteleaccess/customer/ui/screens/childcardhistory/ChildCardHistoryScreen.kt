@@ -1,6 +1,7 @@
 package com.eduteleaccess.customer.ui.screens.childcardhistory
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,6 +52,9 @@ import com.eduteleaccess.customer.ui.util.navigateTo
 fun ChildCardHistoryScreen(navController: NavController, path: String) {
 
     val currentRoute = "childCardHistory/${path}"
+
+    Log.d("Inside ChildScreen", path)
+
 
     val context = LocalContext.current
 
@@ -140,6 +144,13 @@ fun ChildCardHistoryScreen(navController: NavController, path: String) {
                         }
                         Text(
                             text = "${state.error}",
+                            color = Color.Gray
+                        )
+                    }
+
+                    state.childCardHistory.isEmpty() ->{
+                        Text(
+                            text = "No transactions available",
                             color = Color.Gray
                         )
                     }

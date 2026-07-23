@@ -95,7 +95,7 @@ interface ApiService {
     ): Response<TopUpResponse>
 
     // get child card history
-    @GET("card-holder/family/{contact_public_id}/access_events")
+    @GET("card-holder/family/{child_public_id}/access_events")
     suspend fun getChildHistory(
         @Header("Authorization") token: String,
         @Path("child_public_id") childPublicId: String

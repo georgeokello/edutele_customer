@@ -1,6 +1,7 @@
 package com.eduteleaccess.customer.ui.screens.childcardhistory
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -56,6 +57,8 @@ class ChildCardHistoryViewModel(
 
                 if(!tokenValue.isNullOrEmpty()){
 
+                    Log.d("Inside Fetch Function", child_public_id)
+
                     val response = repository.getChildCardHistory(tokenValue, child_public_id)
 
                     if (response.isSuccessful) {
@@ -67,6 +70,8 @@ class ChildCardHistoryViewModel(
                             isLoading = false,
                             childCardHistory =  childCardHistories
                         )
+
+                        Log.d("Inside Response Success", "it ran")
 
                     } else {
 
@@ -99,6 +104,8 @@ class ChildCardHistoryViewModel(
                     isLoading = false,
                     error = "Something went wrong, Try again Later"
                 )
+
+                e.message?.let { Log.d("Inside Catch", it) }
             }
         }
     }

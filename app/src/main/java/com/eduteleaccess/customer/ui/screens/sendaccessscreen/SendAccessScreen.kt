@@ -149,9 +149,7 @@ fun SendMoneyScreen(navController: NavController) {
                         OutlinedTextField(
                             value = phoneNumber,
                             onValueChange = {
-                                if (it.all { ch -> ch.isDigit() }) {
-                                    phoneNumber = it
-                                }
+                                phoneNumber = it
                             },
                             label = { Text("Phone or CardNo") },
                             placeholder = { Text("07XXXXXXXX or EDU-XXX") },
@@ -165,9 +163,6 @@ fun SendMoneyScreen(navController: NavController) {
                                 .fillMaxWidth()
                                 .height(60.dp),
                             shape = RoundedCornerShape(8.dp),
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Number
-                            )
                         )
 
                         Spacer(modifier = Modifier.height(24.dp))
@@ -182,7 +177,7 @@ fun SendMoneyScreen(navController: NavController) {
                                 .fillMaxWidth()
                                 .height(52.dp)
                                 .padding(),
-                            enabled = phoneNumber.length >= 9,
+                            enabled = phoneNumber.length >= 4,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Color(0xFF2E7D32),
                                 contentColor = Color.White,

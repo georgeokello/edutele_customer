@@ -1,6 +1,7 @@
 package com.eduteleaccess.customer.ui.screens.cards
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -377,9 +378,6 @@ fun CardsScreen(
                                             viewModel.closeSendDialog()
                                             // Handle confirmation
                                             viewModel.openSendConfirmDialog(selectedCard!!)
-                                            // clear fields
-                                            accessValue = ""
-                                            remarks = ""
 
                                         },
                                         enabled =
@@ -425,7 +423,7 @@ fun CardsScreen(
 
                         if(showSendConfirmDialog && selectedCard != null){
                             AlertDialog(
-                                onDismissRequest = { /*TODO*/ },
+                                onDismissRequest = { viewModel.closeSendConfirmDialog() },
                                 title = {
                                     Text(text = "Confirm Transfer of $accessValue")
                                 },
@@ -509,8 +507,7 @@ fun CardsScreen(
                                         onClick = {
                                             // Handle confirmation
                                             viewModel.sendAccess(selectedCard!!.public_id, accessValue, pin, remarks)
-                                            //clear fields
-                                            pin = ""
+
                                         },
                                         enabled = pin.length >= 4,
 
@@ -552,7 +549,7 @@ fun CardsScreen(
 
                         if(showDeleteCardDialog && selectedCard != null){
                             AlertDialog(
-                                onDismissRequest = { /*TODO*/ },
+                                onDismissRequest = { viewModel.closeDeleteCardDialog() },
                                 title = {
                                     Text(text = "Delete Card: ${selectedCard!!.full_name}")
                                 },
@@ -590,7 +587,7 @@ fun CardsScreen(
 
                         if(showSetLimitDialog && selectedCard != null){
                             AlertDialog(
-                                onDismissRequest = { /*TODO*/ },
+                                onDismissRequest = { viewModel.closeSetLimitDialog() },
                                 title = {
                                     Text(text = "Weekly Usage Limit")
                                 },
@@ -1121,6 +1118,7 @@ fun ChildCard(card: RelationshipItem, viewModel: CardsViewModel, navController: 
                     onClick = {
                         // show transaction history
                         navigateTo(navController, "childCardHistory/${card.public_id}")
+                        Log.d("History Test", "childCardHistory/${card.public_id}")
                     }
                 )
 

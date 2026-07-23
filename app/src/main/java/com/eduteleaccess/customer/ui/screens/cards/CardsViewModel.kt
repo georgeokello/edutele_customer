@@ -435,6 +435,7 @@ class CardsViewModel(
                 val tokenValue = userPreferences.tokenFlow.first()
 
                 if(!tokenValue.isNullOrEmpty()){
+                    Log.d("Send Access Parameters", "${tokenValue}, ${childPublicId}, ${accessValue}, ${pin}, ${remarks}, End")
                     val response = repository.topUpChildCard(tokenValue,childPublicId, accessValue,pin,remarks)
                     if(response.isSuccessful){
                         _uiState.value = _uiState.value.copy(
@@ -482,8 +483,9 @@ class CardsViewModel(
             }catch (e: Exception){
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = "Something went wrong, Try again Later"
+                    error = "Failed to Send Access, Try again Later"
                 )
+                e.message?.let { Log.d("Send Access", it) }
             }
         }
 
